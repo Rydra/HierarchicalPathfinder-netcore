@@ -101,7 +101,7 @@ namespace HPASharp
 			
 	        if (path.PathCost != -1)
 	        {
-				// Yeah, we are supposing reaching A - B is the same like reaching B - A. Which
+				// TODO: Yeah, we are supposing reaching A - B is the same like reaching B - A. Which
 				// depending on the game this is NOT necessarily true (e.g climbing, downstepping a mountain)
 		        _distances[tuple] = _distances[invtuple] = path.PathCost;
 		        _cachedPaths[tuple] = new List<Id<ConcreteNode>>(path.PathNodes);

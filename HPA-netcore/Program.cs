@@ -32,7 +32,7 @@ namespace HPASharp
 
             // Prepare the abstract graph beforehand
             IPassability passability = new FakePassability(width, height);
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
+            var concreteMap = ConcreteMap.Create(width, height, passability);
             var abstractMapFactory = new HierarchicalMapFactory();
 			var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
             //var edges = absTiling.AbstractGraph.Nodes.SelectMany(x => x.Edges.Values)
@@ -99,7 +99,7 @@ namespace HPASharp
 
             // Prepare the abstract graph beforehand
             IPassability passability = new FakePassability(width, height);
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
+            var concreteMap = ConcreteMap.Create(width, height, passability);
             var abstractMapFactory = new HierarchicalMapFactory();
             var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
 
@@ -162,7 +162,7 @@ namespace HPASharp
 
             IPassability passability = new FakePassability(width, height);
 
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
+            var concreteMap = ConcreteMap.Create(width, height, passability);
 
             var abstractMapFactory = new HierarchicalMapFactory();
 			var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);

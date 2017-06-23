@@ -44,7 +44,7 @@ namespace HPASharp
         // Create a new concreteMap as a copy of another concreteMap (just copying obstacles)
         public ConcreteMap Slice(int horizOrigin, int vertOrigin, int width, int height, IPassability passability)
         {
-            var slicedConcreteMap = new ConcreteMap(this.TileType, width, height, passability);
+            var slicedConcreteMap = new ConcreteMap(TileType, width, height, passability);
 
 	        foreach (var slicedMapNode in slicedConcreteMap.Graph.Nodes)
 	        {
@@ -67,8 +67,8 @@ namespace HPASharp
 
         public int GetHeuristic(Id<ConcreteNode> startNodeId, Id<ConcreteNode> targetNodeId)
         {
-            var startPosition = Graph.GetNodeInfo(startNodeId).Position;
-            var targetPosition = Graph.GetNodeInfo(targetNodeId).Position;
+            Position startPosition = Graph.GetNodeInfo(startNodeId).Position;
+            Position targetPosition = Graph.GetNodeInfo(targetNodeId).Position;
 
             var startX = startPosition.X;
             var targetX = targetPosition.X;
@@ -123,13 +123,13 @@ namespace HPASharp
         public IEnumerable<Connection<ConcreteNode>> GetConnections(Id<ConcreteNode> nodeId)
         {
             var result = new List<Connection<ConcreteNode>>();
-            var node = Graph.GetNode(nodeId);
-            var nodeInfo = node.Info;
+            ConcreteNode node = Graph.GetNode(nodeId);
+            ConcreteNodeInfo nodeInfo = node.Info;
 
             foreach (var edge in node.Edges.Values)
             {
-                var targetNodeId = edge.TargetNodeId;
-                var targetNodeInfo = Graph.GetNodeInfo(targetNodeId);
+                Id<ConcreteNode> targetNodeId = edge.TargetNodeId;
+                ConcreteNodeInfo targetNodeInfo = Graph.GetNodeInfo(targetNodeId);
                 if (CanJump(targetNodeInfo.Position, nodeInfo.Position) && !targetNodeInfo.IsObstacle)
                     result.Add(new Connection<ConcreteNode>(targetNodeId, edge.Info.Cost));
             }
@@ -206,5 +206,10 @@ namespace HPASharp
         }
 
         #endregion
+
+        public static ConcreteMap Create(int width, int height, IPassability passability, TileType tilingType = TileType.Octile)
+        {
+            return new ConcreteMap(tilingType, width, height, passability);
+        }
     }
 }
