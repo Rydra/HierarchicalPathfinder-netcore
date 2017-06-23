@@ -121,10 +121,10 @@ namespace HPASharp
 
         public void AddEdge(Id<AbstractNode> sourceNodeId, Id<AbstractNode> destNodeId, int cost, int level = 1, bool inter = false, List<Id<AbstractNode>> pathPathNodes = null)
         {
-	        var edgeInfo = new AbstractEdgeInfo(cost, level, inter);
+	        var edgeInfo = new AbstractEdgeInfo(level, inter);
 	        edgeInfo.InnerLowerLevelPath = pathPathNodes;
 
-			AbstractGraph.AddEdge(sourceNodeId, destNodeId, edgeInfo);
+			AbstractGraph.AddEdge(sourceNodeId, destNodeId, cost, edgeInfo);
         }
 
         public List<AbstractEdge> GetNodeEdges(Id<ConcreteNode> nodeId)
@@ -158,7 +158,7 @@ namespace HPASharp
 				if (!PositionInCurrentCluster(targetNodeInfo.Position))
 					continue;
 
-				result.Add(new Connection<AbstractNode>(targetNodeId, edgeInfo.Cost));
+				result.Add(new Connection<AbstractNode>(targetNodeId, edge.Cost));
 			}
 
 			return result;

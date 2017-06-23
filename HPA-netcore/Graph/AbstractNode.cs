@@ -36,31 +36,31 @@ namespace HPASharp.Graph
     {
         public Id<AbstractNode> TargetNodeId { get; set; }
         public AbstractEdgeInfo Info { get; set; }
+        public int Cost { get; set; }
 
-        public AbstractEdge(Id<AbstractNode> targetNodeId, AbstractEdgeInfo info)
+        public AbstractEdge(Id<AbstractNode> targetNodeId, int cost, AbstractEdgeInfo info)
         {
             TargetNodeId = targetNodeId;
             Info = info;
+            Cost = cost;
         }
     }
     
     public class AbstractEdgeInfo
     {
-        public int Cost { get; set; }
         public int Level { get; set; }
         public bool IsInterClusterEdge { get; set; }
 		public List<Id<AbstractNode>> InnerLowerLevelPath { get; set; }
 
-        public AbstractEdgeInfo(int cost, int level = 1, bool interCluster = true)
+        public AbstractEdgeInfo(int level = 1, bool interCluster = true)
         {
-            Cost = cost;
             Level = level;
             IsInterClusterEdge = interCluster;
         }
 
         public override string ToString()
         {
-            return ("cost: " + Cost + "; level: " + Level + "; interCluster: " + IsInterClusterEdge);
+            return ("level: " + Level + "; interCluster: " + IsInterClusterEdge);
         }
 
         public void PrintInfo()

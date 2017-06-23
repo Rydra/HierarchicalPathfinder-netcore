@@ -341,7 +341,7 @@ namespace HPA_netcore.Tests
 
                     var abstractPathNode = (AbstractPathNode)node;
                     return _abstractMap.AbstractGraph.GetNodeInfo(abstractPathNode.Id).Position;
-                }).ToList();
+                }).Distinct().ToList();
 
                 Assert.Equal(points, positions);
 

@@ -138,13 +138,13 @@ namespace HPASharp.Factories
 			{
 				var targetNodeId = edge.TargetNodeId;
 
-				map.AddEdge(nodeId, targetNodeId, edge.Info.Cost,
+				map.AddEdge(nodeId, targetNodeId, edge.Cost,
 					edge.Info.Level, edge.Info.IsInterClusterEdge,
 					edge.Info.InnerLowerLevelPath != null ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath) : null);
 
 				edge.Info.InnerLowerLevelPath?.Reverse();
 
-				map.AddEdge(targetNodeId, nodeId, edge.Info.Cost,
+				map.AddEdge(targetNodeId, nodeId, edge.Cost,
 					edge.Info.Level, edge.Info.IsInterClusterEdge, edge.Info.InnerLowerLevelPath);
 			}
 
@@ -208,8 +208,8 @@ namespace HPASharp.Factories
 					break;
 			}
 			
-			_hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, new AbstractEdgeInfo(cost, level, true));
-			_hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, new AbstractEdgeInfo(cost, level, true));
+			_hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
+			_hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
 		}
         
 		private void CreateIntraClusterEdges(Cluster cluster)
@@ -219,10 +219,11 @@ namespace HPASharp.Factories
 			{
 				if (point1 != point2 && cluster.AreConnected(point1.AbstractNodeId, point2.AbstractNodeId))
 				{
-					var abstractEdgeInfo = new AbstractEdgeInfo(cluster.GetDistance(point1.AbstractNodeId, point2.AbstractNodeId), 1, false);
+					var abstractEdgeInfo = new AbstractEdgeInfo(1, false);
 					_hierarchicalMap.AbstractGraph.AddEdge(
 						point1.AbstractNodeId,
 						point2.AbstractNodeId,
+						cluster.GetDistance(point1.AbstractNodeId, point2.AbstractNodeId),
 						abstractEdgeInfo);
 				}
 			}

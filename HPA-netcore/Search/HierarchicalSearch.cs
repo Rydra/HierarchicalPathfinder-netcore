@@ -30,8 +30,8 @@ namespace HPASharp.Search
 	        if (!mainSearch)
 	        {
                 map.SetCurrentClusterByPositionAndLevel(nodeInfo.Position, level + 1);
-                var edgeInfo = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId].Info;
-				path = new Path<AbstractNode>(edgeInfo.InnerLowerLevelPath, edgeInfo.Cost);
+                var edge = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId];
+				path = new Path<AbstractNode>(edge.Info.InnerLowerLevelPath, edge.Cost);
 			}
 	        else
 	        {

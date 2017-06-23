@@ -32,22 +32,17 @@ namespace HPASharp.Graph
     {
         public Id<ConcreteNode> TargetNodeId { get; set; }
         public ConcreteEdgeInfo Info { get; set; }
+        public int Cost { get; set; }
 
-        public ConcreteEdge(Id<ConcreteNode> targetNodeId, ConcreteEdgeInfo info)
+        public ConcreteEdge(Id<ConcreteNode> targetNodeId, int cost)
         {
             TargetNodeId = targetNodeId;
-            Info = info;
+            Cost = cost;
         }
     }
 
     public class ConcreteEdgeInfo
     {
-        public ConcreteEdgeInfo(int cost)
-        {
-            Cost = cost;
-        }
-
-        public int Cost { get; set; }
     }
 
     public class ConcreteNodeInfo

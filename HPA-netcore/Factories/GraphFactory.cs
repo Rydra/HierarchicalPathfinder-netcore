@@ -7,7 +7,7 @@ namespace HPASharp.Factories
 	{
 		public static ConcreteGraph CreateGraph(int width, int height, IPassability passability)
 		{
-			var graph = new ConcreteGraph();
+			var graph = new ConcreteGraph(TileType.Octile);
 
 			CreateNodes(width, height, graph, passability);
 			CreateEdges(graph, width, height, TileType.Octile); // We hardcode OCTILE for the time being
@@ -17,7 +17,7 @@ namespace HPASharp.Factories
 
 		public static ConcreteNode GetNodeByPos(ConcreteGraph graph, int x, int y, int width)
 		{
-			 return graph.GetNode(GetNodeIdFromPos(x, y,width));
+			 return graph.GetNode(GetNodeIdFromPos(x, y, width));
 		}
 		
 		public static Id<ConcreteNode> GetNodeIdFromPos(int left, int top, int width)
@@ -33,7 +33,7 @@ namespace HPASharp.Factories
 			var targetNode = GetNodeByPos(graph, x, y, width);
 			var cost = targetNode.Info.Cost;
 			cost = isDiag ? (cost * 34) / 24 : cost;
-			graph.AddEdge(nodeId, targetNode.NodeId, new ConcreteEdgeInfo(cost));
+			graph.AddEdge(nodeId, targetNode.NodeId, cost, new ConcreteEdgeInfo());
 		}
 
 		private static void CreateEdges(ConcreteGraph graph, int width, int height, TileType tileType)
