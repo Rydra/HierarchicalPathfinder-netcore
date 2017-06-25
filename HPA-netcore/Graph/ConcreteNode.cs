@@ -3,7 +3,6 @@ using HPASharp.Infrastructure;
 
 namespace HPASharp.Graph
 {
-
     public class ConcreteNode : INode<ConcreteNode, ConcreteNodeInfo, ConcreteEdge>
     {
         public Id<ConcreteNode> NodeId { get; set; }

@@ -34,7 +34,7 @@ namespace HPASharp
     /// Abstract maps represent, as the name implies, an abstraction
     /// built over the concrete map.
     /// </summary>
-    public class HierarchicalMap : IGraph<AbstractNode>
+    public class HierarchicalMap
     {
         public int Height { get; set; }
         public int Width { get; set; }
@@ -90,20 +90,7 @@ namespace HPASharp
             ConcreteNodeIdToAbstractNodeIdMap = new Dictionary<Id<ConcreteNode>, Id<AbstractNode>>();
 
             Clusters = new List<Cluster>();
-            GraphLayers = new GraphLayers(maxLevel);
-        }
-
-        public int GetHeuristic(Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId)
-        {
-            var searchGraph = GraphLayers.GetSearchLayer();
-
-            var startPos = searchGraph.GetNodeInfo(startNodeId).Position;
-            var targetPos = searchGraph.GetNodeInfo(targetNodeId).Position;
-            var diffY = Math.Abs(startPos.Y - targetPos.Y);
-            var diffX = Math.Abs(startPos.X - targetPos.X);
-            // Manhattan distance, after testing a bit for hierarchical searches we do not need
-            // the level of precision of Diagonal distance or euclidean distance
-            return (diffY + diffX) * Constants.COST_ONE;
+            GraphLayers = new GraphLayers(maxLevel, this);
         }
 		
 		public Cluster FindClusterForPosition(Position pos)
@@ -142,30 +129,6 @@ namespace HPASharp
         {
             return Clusters[id.IdValue];
         }
-
-		/// <summary>
-		/// Gets the neighbours(successors) of the nodeId for the level set in the currentLevelForSearch
-		/// </summary>
-		public IEnumerable<Connection<AbstractNode>> GetConnections(Id<AbstractNode> nodeId)
-		{
-		    var searchGraph = GraphLayers.GetSearchLayer();
-
-            var node = searchGraph.GetNode(nodeId);
-			var edges = node.Edges;
-			var result = new List<Connection<AbstractNode>>();
-			foreach (var edge in edges.Values)
-			{
-				var targetNodeId = edge.TargetNodeId;
-				var targetNodeInfo = searchGraph.GetNodeInfo(targetNodeId);
-				
-				if (!PositionInCurrentCluster(targetNodeInfo.Position))
-					continue;
-
-				result.Add(new Connection<AbstractNode>(targetNodeId, edge.Cost));
-			}
-
-			return result;
-		}
 		
 	    public void RemoveAbstractNode(Id<AbstractNode> abstractNodeId)
 	    {
@@ -281,7 +244,7 @@ namespace HPASharp
 
         public void AddEdgesBetweenAbstractNodes(Id<AbstractNode> srcAbstractNodeId, Id<AbstractNode> destAbstractNodeId, int level)
         {
-            var search = new AStar<AbstractNode>(this, srcAbstractNodeId, destAbstractNodeId);
+            var search = new AStar<AbstractNode>(GraphLayers.GetSearchLayer(), srcAbstractNodeId, destAbstractNodeId);
             var path = search.FindPath();
             if (path.PathCost >= 0)
             {

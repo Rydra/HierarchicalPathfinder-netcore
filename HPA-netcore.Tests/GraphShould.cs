@@ -23,7 +23,7 @@ namespace HPA_netcore.Tests
         [Fact]
         public void InstantiateAbstractGraph()
         {
-            var graph = new AbstractGraph();
+            var graph = new AbstractGraph(null);
             Assert.NotNull(graph);
         }
 

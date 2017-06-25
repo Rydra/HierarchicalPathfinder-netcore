@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using HPASharp;
 using HPASharp.Graph;
 using HPASharp.Infrastructure;
 
@@ -12,13 +13,13 @@ namespace HPA_netcore.Graph
 
         public AbstractGraph AbstractGraph => _graphLevels[_currentLevel];
 
-        public GraphLayers(int levels)
+        public GraphLayers(int levels, HierarchicalMap map)
         {
             _graphLevels = new Dictionary<int, AbstractGraph>();
             _maxLevels = levels;
             for (int level = 1; level <= levels; level++)
             {
-                _graphLevels[level] = new AbstractGraph();
+                _graphLevels[level] = new AbstractGraph(map);
             }
 
             _currentLevel = 1;

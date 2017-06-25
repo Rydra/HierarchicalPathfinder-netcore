@@ -74,7 +74,7 @@ namespace HPASharp.Graph
 
 	        foreach (var edge in node.Edges.Values)
 	        {
-	            if (IsValid(node, edge))
+	            if (IsValid(edge))
 	            {
 	                result.Add(new Connection<TNode>(edge.TargetNodeId, edge.Cost));
                 }
@@ -84,7 +84,7 @@ namespace HPASharp.Graph
 	        return result;
         }
 
-	    protected abstract bool IsValid(TNode source, TEdge edge);
+	    protected abstract bool IsValid(TEdge edge);
 
         #region AbstractGraph updating
 
@@ -195,8 +195,8 @@ namespace HPASharp.Graph
 	        }
         }
 
-	    protected override bool IsValid(ConcreteNode source, ConcreteEdge edge)
-	    {
+	    protected override bool IsValid(ConcreteEdge edge)
+        {
 	        ConcreteNode targetNode = GetNode(edge.TargetNodeId);
 	        return !targetNode.Info.IsObstacle;
         }
@@ -204,18 +204,29 @@ namespace HPASharp.Graph
 
 	public class AbstractGraph : Graph<AbstractNode, AbstractNodeInfo, AbstractEdge, AbstractEdgeInfo>
 	{
-		public AbstractGraph() : base((nodeid, info) => new AbstractNode(nodeid, info), (nodeid, cost, info) => new AbstractEdge(nodeid, cost, info))
-		{
-		}
+	    private readonly HierarchicalMap _map;
+
+	    public AbstractGraph(HierarchicalMap map) : base((nodeid, info) => new AbstractNode(nodeid, info), (nodeid, cost, info) => new AbstractEdge(nodeid, cost, info))
+	    {
+	        _map = map;
+	    }
 
 	    public override int GetHeuristic(Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId)
 	    {
-	        throw new NotImplementedException();
-	    }
+	        var startPos = GetNodeInfo(startNodeId).Position;
+	        var targetPos = GetNodeInfo(targetNodeId).Position;
+	        var diffY = Math.Abs(startPos.Y - targetPos.Y);
+	        var diffX = Math.Abs(startPos.X - targetPos.X);
 
-	    protected override bool IsValid(AbstractNode source, AbstractEdge edge)
+	        // Manhattan distance, after testing a bit for hierarchical searches we do not need
+	        // the level of precision of Diagonal distance or euclidean distance
+	        return (diffY + diffX) * Constants.COST_ONE;
+        }
+
+	    protected override bool IsValid(AbstractEdge edge)
 	    {
-	        throw new NotImplementedException();
-	    }
+	        var targetNode = GetNode(edge.TargetNodeId);
+            return _map.PositionInCurrentCluster(targetNode.Info.Position);
+        }
 	}
 }

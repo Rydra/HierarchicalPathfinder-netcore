@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using HPASharp.Graph;
 using HPASharp.Infrastructure;
 
@@ -24,21 +23,20 @@ namespace HPASharp.Search
 
         private List<AbstractPathNode> GetPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int level, bool mainSearch)
         {
-            // This is a hack to search higher level paths...
-            map.SetCurrentLevel(level + 1);
-
             // TODO: This could be perfectly replaced by cached paths in the clusters!
             Path<AbstractNode> path;
 	        if (!mainSearch)
 	        {
                 // We need to search to a higher level edge
+	            map.SetCurrentLevel(level + 1);
                 var edge = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId];
 				path = new Path<AbstractNode>(edge.Info.InnerLowerLevelPath, edge.Cost);
 			}
 	        else
 	        {
                 map.SetAllMapAsCurrentCluster();
-                var search = new AStar<AbstractNode>(map, startNodeId, targetNodeId);
+	            map.SetCurrentLevel(level);
+                var search = new AStar<AbstractNode>(map.AbstractGraph, startNodeId, targetNodeId);
 		        path = search.FindPath();
 	        }
 
