@@ -74,10 +74,12 @@ namespace HPASharp.Factories
 		// x and y are the positions where I want to put the node
 		private Id<AbstractNode> InsertNodeIntoHierarchicalMap(HierarchicalMap map, Id<ConcreteNode> concreteNodeId, Position pos)
 		{
-			// If the node already existed (for instance, it was the an entrance point already
-			// existing in the graph, we need to keep track of the previous status in order
-			// to be able to restore it once we delete this STAL
-			if (map.ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
+		    map.SetCurrentLevel(1);
+
+            // If the node already existed (for instance, it was the an entrance point already
+            // existing in the graph, we need to keep track of the previous status in order
+            // to be able to restore it once we delete this STAL
+            if (map.ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
 			{
 				var existingAbstractNodeId = map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
 				var nodeBackup = new NodeBackup(
@@ -104,9 +106,15 @@ namespace HPASharp.Factories
 				pos,
 				concreteNodeId);
 
-			map.AbstractGraph.AddNode(abstractNodeId, info);
+		    for (int i = 1; i <= map.MaxLevel; i++)
+		    {
+		        map.SetCurrentLevel(i);
+		        map.AbstractGraph.AddNode(abstractNodeId, info);
+		    }
 
-			foreach (var entrancePoint in cluster.EntrancePoints)
+		    map.SetCurrentLevel(1);
+
+            foreach (var entrancePoint in cluster.EntrancePoints)
 			{
 				if (cluster.AreConnected(abstractNodeId, entrancePoint.AbstractNodeId))
 				{

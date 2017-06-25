@@ -178,15 +178,19 @@ namespace HPASharp
 		
 	    public void RemoveAbstractNode(Id<AbstractNode> abstractNodeId)
 	    {
-			var abstractNodeInfo = AbstractGraph.GetNodeInfo(abstractNodeId);
+	        for (int level = 1; level <= MaxLevel; level++)
+	        {
+                SetCurrentLevel(level);
+	            var abstractNodeInfo = AbstractGraph.GetNodeInfo(abstractNodeId);
 
-			var cluster = Clusters[abstractNodeInfo.ClusterId.IdValue];
-			cluster.RemoveLastEntranceRecord();
+	            var cluster = Clusters[abstractNodeInfo.ClusterId.IdValue];
+	            cluster.RemoveLastEntranceRecord();
 
-			ConcreteNodeIdToAbstractNodeIdMap.Remove(abstractNodeInfo.ConcreteNodeId);
-			AbstractGraph.RemoveEdgesFromAndToNode(abstractNodeId);
-			AbstractGraph.Remove(abstractNodeId);
-		}
+	            ConcreteNodeIdToAbstractNodeIdMap.Remove(abstractNodeInfo.ConcreteNodeId);
+	            AbstractGraph.RemoveEdgesFromAndToNode(abstractNodeId);
+	            AbstractGraph.Remove(abstractNodeId);
+	        }
+	    }
 
 	    private static bool IsValidEdgeForLevel(AbstractEdgeInfo edgeInfo, int level)
 	    {
@@ -327,6 +331,7 @@ namespace HPASharp
             
             foreach (var cluster in Clusters)
             {
+                SetCurrentLevel(1);
                 if (cluster.Origin.X >= currentClusterX0 && cluster.Origin.X <= currentClusterX1 &&
                     cluster.Origin.Y >= currentClusterY0 && cluster.Origin.Y <= currentClusterY1)
                 {
@@ -335,6 +340,7 @@ namespace HPASharp
                         if (abstractNodeInfo.Id == entrance.AbstractNodeId || !IsValidAbstractNodeForLevel(entrance.AbstractNodeId, level))
                             continue;
 
+                        SetCurrentLevel(level);
                         AddEdgesBetweenAbstractNodes(abstractNodeInfo.Id, entrance.AbstractNodeId, level);
                     }
                 }

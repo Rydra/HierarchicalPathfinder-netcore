@@ -23,13 +23,14 @@ namespace HPASharp.Search
         private List<AbstractPathNode> GetPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int level, bool mainSearch)
         {
             map.SetCurrentLevelForSearches(level);
+            map.SetCurrentLevel(level);
             var nodeInfo = map.AbstractGraph.GetNodeInfo(startNodeId);
 
             // TODO: This could be perfectly replaced by cached paths in the clusters!
 	        Path<AbstractNode> path;
 	        if (!mainSearch)
 	        {
-                map.SetCurrentClusterByPositionAndLevel(nodeInfo.Position, level + 1);
+	            map.SetCurrentLevel(level + 1);
                 var edge = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId];
 				path = new Path<AbstractNode>(edge.Info.InnerLowerLevelPath, edge.Cost);
 			}
@@ -86,6 +87,7 @@ namespace HPASharp.Search
         public List<IPathNode> AbstractPathToLowLevelPath(HierarchicalMap map, List<AbstractPathNode> abstractPath, int mapWidth, int maxPathsToCalculate = int.MaxValue)
         {
             var result = new List<IPathNode>();
+            map.SetCurrentLevel(1);
             if (abstractPath.Count == 0)
 				return result;
 
