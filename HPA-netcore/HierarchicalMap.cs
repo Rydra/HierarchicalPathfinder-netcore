@@ -37,11 +37,15 @@ namespace HPASharp
     {
         public int Height { get; set; }
         public int Width { get; set; }
-        public AbstractGraph AbstractGraph { get; set; }
+
+        public AbstractGraph AbstractGraph => GraphByLevel[currentGraphLevel];
+
+        public Dictionary<int, AbstractGraph> GraphByLevel { get; set; }
         public int ClusterSize { get; set; }
         public int MaxLevel { get; set; }
         public List<Cluster> Clusters { get; set; }
-	    public int NrNodes { get { return AbstractGraph.Nodes.Count; } }
+
+	    public int NrNodes => AbstractGraph.Nodes.Count;
 
         // This list, indexed by a node id from the low level, 
         // indicates to which abstract node id it maps. It is a sparse
@@ -50,7 +54,9 @@ namespace HPASharp
         public Dictionary<Id<ConcreteNode>, Id<AbstractNode>> ConcreteNodeIdToAbstractNodeIdMap { get; set; }
         public AbsType Type { get; set; }
 		
-		private int currentLevel;
+		private int currentLevelForSearch;
+
+        private int currentGraphLevel;
 
 		private int currentClusterY0;
 
@@ -87,13 +93,19 @@ namespace HPASharp
             ConcreteNodeIdToAbstractNodeIdMap = new Dictionary<Id<ConcreteNode>, Id<AbstractNode>>();
 
             Clusters = new List<Cluster>();
-            AbstractGraph = new AbstractGraph();
+            GraphByLevel = new Dictionary<int, AbstractGraph>();
+
+            currentGraphLevel = 1;
+            for (int i = 1; i <= maxLevel; i++)
+            {
+                GraphByLevel[i] = new AbstractGraph();
+            }
         }
 
         public int GetHeuristic(Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId)
         {
-            var startPos = AbstractGraph.GetNodeInfo(startNodeId).Position;
-            var targetPos = AbstractGraph.GetNodeInfo(targetNodeId).Position;
+            var startPos = GraphByLevel[currentLevelForSearch].GetNodeInfo(startNodeId).Position;
+            var targetPos = GraphByLevel[currentLevelForSearch].GetNodeInfo(targetNodeId).Position;
             var diffY = Math.Abs(startPos.Y - targetPos.Y);
             var diffX = Math.Abs(startPos.X - targetPos.X);
             // Manhattan distance, after testing a bit for hierarchical searches we do not need
@@ -139,21 +151,21 @@ namespace HPASharp
         }
 
 		/// <summary>
-		/// Gets the neighbours(successors) of the nodeId for the level set in the currentLevel
+		/// Gets the neighbours(successors) of the nodeId for the level set in the currentLevelForSearch
 		/// </summary>
 		public IEnumerable<Connection<AbstractNode>> GetConnections(Id<AbstractNode> nodeId)
 		{
-			var node = AbstractGraph.GetNode(nodeId);
+			var node = GraphByLevel[currentLevelForSearch].GetNode(nodeId);
 			var edges = node.Edges;
 			var result = new List<Connection<AbstractNode>>();
 			foreach (var edge in edges.Values)
 			{
 				var edgeInfo = edge.Info;
-				if (!IsValidEdgeForLevel(edgeInfo, currentLevel))
+				if (!IsValidEdgeForLevel(edgeInfo, currentLevelForSearch))
 					continue;
 
 				var targetNodeId = edge.TargetNodeId;
-				var targetNodeInfo = AbstractGraph.GetNodeInfo(targetNodeId);
+				var targetNodeInfo = GraphByLevel[currentLevelForSearch].GetNodeInfo(targetNodeId);
 				
 				if (!PositionInCurrentCluster(targetNodeInfo.Position))
 					continue;
@@ -173,7 +185,7 @@ namespace HPASharp
 
 			ConcreteNodeIdToAbstractNodeIdMap.Remove(abstractNodeInfo.ConcreteNodeId);
 			AbstractGraph.RemoveEdgesFromAndToNode(abstractNodeId);
-			AbstractGraph.RemoveLastNode();
+			AbstractGraph.Remove(abstractNodeId);
 		}
 
 	    private static bool IsValidEdgeForLevel(AbstractEdgeInfo edgeInfo, int level)
@@ -239,7 +251,7 @@ namespace HPASharp
 
 		public void SetCurrentLevelForSearches(int level)
 		{
-			currentLevel = level;
+			currentLevelForSearch = level;
 		}
 
         private bool IsValidAbstractNodeForLevel(Id<AbstractNode> abstractNodeId, int level)
@@ -259,13 +271,14 @@ namespace HPASharp
             for (var level = 2; level <= MaxLevel; level++)
             {
                 SetCurrentLevelForSearches(level - 1);
-
+                
                 int n = 1 << (level - 1);
                 // Group clusters by their level. Each subsequent level doubles the amount of clusters in each group
                 var clusterGroups = Clusters.GroupBy(cl => $"{cl.ClusterX / n}_{cl.ClusterY / n}");
 
                 foreach (var clusterGroup in clusterGroups)
                 {
+                    SetCurrentLevel(1);
                     var entrancesInClusterGroup = clusterGroup
                         .SelectMany(cl => cl.EntrancePoints)
                         .Where(entrance => GetEntrancePointLevel(entrance) >= level)
@@ -282,6 +295,7 @@ namespace HPASharp
                         entrancePosition,
                         level);
 
+                    SetCurrentLevel(level);
                     foreach (var entrance1 in entrancesInClusterGroup)
                         foreach (var entrance2 in entrancesInClusterGroup)
                         {
@@ -337,5 +351,10 @@ namespace HPASharp
 				AddEdgesToOtherEntrancesInCluster(abstractNodeInfo, level);
 			}
 		}
-	}
+
+        public void SetCurrentLevel(int i)
+        {
+            currentGraphLevel = i;
+        }
+    }
 }

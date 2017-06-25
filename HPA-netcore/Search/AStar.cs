@@ -54,26 +54,26 @@ namespace HPASharp.Search
 
 	public class NodeLookup<TNode>
 	{
-		private AStarNode<TNode>?[] _astarNodes;
+		private Dictionary<Id<TNode>, AStarNode<TNode>> _astarNodes;
 
-		public NodeLookup(int numberOfNodes)
+		public NodeLookup()
 		{
-			_astarNodes = new AStarNode<TNode>?[numberOfNodes];
+			_astarNodes = new Dictionary<Id<TNode>, AStarNode<TNode>>();
 		}
 
 		public void SetNodeValue(Id<TNode> nodeId, AStarNode<TNode> value)
 		{
-			_astarNodes[nodeId.IdValue] = value;
+			_astarNodes[nodeId] = value;
 		}
 
 		public bool NodeIsVisited(Id<TNode> nodeId)
 		{
-			return _astarNodes[nodeId.IdValue].HasValue;
+		    return _astarNodes.ContainsKey(nodeId);
 		}
 
 		public AStarNode<TNode> GetNodeValue(Id<TNode> nodeId)
 		{
-			return _astarNodes[nodeId.IdValue].Value;
+			return _astarNodes[nodeId];
 		}
 	}
 
@@ -97,7 +97,7 @@ namespace HPASharp.Search
 			_openQueue = new SimplePriorityQueue<Id<TNode>>();
 			_openQueue.Enqueue(startNodeId, startNode.F);
 
-			_nodeLookup = new NodeLookup<TNode>(map.NrNodes);
+			_nodeLookup = new NodeLookup<TNode>();
 			_nodeLookup.SetNodeValue(startNodeId, startNode);
 		}
 

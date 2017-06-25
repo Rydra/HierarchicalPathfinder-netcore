@@ -158,7 +158,8 @@ namespace HPASharp.Factories
 				CreateEntranceEdges(entrance, _hierarchicalMap.Type);
 			}
 
-			foreach (var cluster in clusters)
+		    _hierarchicalMap.SetCurrentLevel(1);
+            foreach (var cluster in clusters)
 			{
 				cluster.CreateIntraClusterEdges();
 				CreateIntraClusterEdges(cluster);
@@ -207,9 +208,14 @@ namespace HPASharp.Factories
 					}
 					break;
 			}
-			
-			_hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
-			_hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
+
+
+		    for (int i = 1; i <= level; i++)
+		    {
+                _hierarchicalMap.SetCurrentLevel(i);
+		        _hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
+		        _hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, cost, new AbstractEdgeInfo(level, true));
+		    }
 		}
         
 		private void CreateIntraClusterEdges(Cluster cluster)
@@ -413,8 +419,12 @@ namespace HPASharp.Factories
 		{
 			foreach (var abstractNode in GenerateAbstractNodes(entrancesList))
 			{
-				_hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[abstractNode.ConcreteNodeId] = abstractNode.Id;
-				_hierarchicalMap.AbstractGraph.AddNode(abstractNode.Id, abstractNode);
+			    for (int level = 1; level <= abstractNode.Level; level++)
+			    {
+                    _hierarchicalMap.SetCurrentLevel(level);
+			        _hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[abstractNode.ConcreteNodeId] = abstractNode.Id;
+			        _hierarchicalMap.AbstractGraph.AddNode(abstractNode.Id, abstractNode);
+			    }
 			}
 		}
 

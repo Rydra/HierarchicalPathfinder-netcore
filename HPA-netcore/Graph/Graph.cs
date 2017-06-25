@@ -35,7 +35,7 @@ namespace HPASharp.Graph
 		// This list is implicitly indexed by the nodeId, which makes removing a random
 		// Node in the list quite of a mess. We could use a dictionary to ease removals,
 		// but lists and arrays are faster for random accesses, and we need performance.
-        public List<TNode> Nodes { get; set; }
+        public Dictionary<Id<TNode>, TNode> Nodes { get; set; }
 	    public int NrNodes => Nodes.Count;
 
         public delegate TEdge EdgeCreator(Id<TNode> targetNodeId, int cost, TEdgeInfo info);
@@ -46,7 +46,7 @@ namespace HPASharp.Graph
 
 		protected Graph(NodeCreator nodeCreator, EdgeCreator edgeCreator)
         {
-            Nodes = new List<TNode>();
+            Nodes = new Dictionary<Id<TNode>, TNode>();
 	        _nodeCreator = nodeCreator;
 	        _edgeCreator = edgeCreator;
         } 
@@ -59,9 +59,9 @@ namespace HPASharp.Graph
         {
             var size = nodeId.IdValue + 1;
             if (Nodes.Count < size)
-                Nodes.Add(_nodeCreator(nodeId, info));
+                Nodes.Add(nodeId, _nodeCreator(nodeId, info));
             else
-                Nodes[nodeId.IdValue] = _nodeCreator(nodeId, info);
+                Nodes[nodeId] = _nodeCreator(nodeId, info);
         }
 
 
@@ -90,29 +90,29 @@ namespace HPASharp.Graph
 
         public void AddEdge(Id<TNode> sourceNodeId, Id<TNode> targetNodeId, int cost, TEdgeInfo info)
         {
-            Nodes[sourceNodeId.IdValue].AddEdge(_edgeCreator(targetNodeId, cost, info));
+            Nodes[sourceNodeId].AddEdge(_edgeCreator(targetNodeId, cost, info));
         }
         
         public void RemoveEdgesFromAndToNode(Id<TNode> nodeId)
         {
-            foreach (var targetNodeId in Nodes[nodeId.IdValue].Edges.Keys)
+            foreach (var targetNodeId in Nodes[nodeId].Edges.Keys)
             {
-                Nodes[targetNodeId.IdValue].RemoveEdge(nodeId);
+                Nodes[targetNodeId].RemoveEdge(nodeId);
             }
 
-            Nodes[nodeId.IdValue].Edges.Clear();
+            Nodes[nodeId].Edges.Clear();
         }
 
-        public void RemoveLastNode()
+        public void Remove(Id<TNode> nodeId)
         {
-            Nodes.RemoveAt(Nodes.Count - 1);
+            Nodes.Remove(nodeId);
         }
 
         #endregion
 
         public TNode GetNode(Id<TNode> nodeId)
         {
-            return Nodes[nodeId.IdValue];
+            return Nodes[nodeId];
         }
 
         public TNodeInfo GetNodeInfo(Id<TNode> nodeId)
@@ -122,7 +122,7 @@ namespace HPASharp.Graph
         
         public IDictionary<Id<TNode>, TEdge> GetEdges(Id<TNode> nodeId)
         {
-            return Nodes[nodeId.IdValue].Edges;
+            return Nodes[nodeId].Edges;
         }
     }
 

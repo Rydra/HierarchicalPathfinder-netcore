@@ -46,7 +46,7 @@ namespace HPASharp
         {
             var slicedConcreteMap = new ConcreteMap(TileType, width, height, passability);
 
-	        foreach (var slicedMapNode in slicedConcreteMap.Graph.Nodes)
+	        foreach (var slicedMapNode in slicedConcreteMap.Graph.Nodes.Values)
 	        {
 		        var globalConcreteNode =
 			        Graph.GetNode(GetNodeIdFromPos(horizOrigin + slicedMapNode.Info.Position.X,
