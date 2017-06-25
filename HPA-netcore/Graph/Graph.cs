@@ -25,7 +25,7 @@ namespace HPASharp.Graph
 	/// a certain amount of information, which is expressed in the templated parameters
 	/// NODEINFO and EDGEINFO
 	/// </summary>
-	public abstract class Graph<TNode, TNodeInfo, TEdge, TEdgeInfo> : IMap<TNode>
+	public abstract class Graph<TNode, TNodeInfo, TEdge, TEdgeInfo> : IGraph<TNode>
 		where TNode : INode<TNode, TNodeInfo, TEdge>
 		where TEdge : IEdge<TNode, TEdgeInfo>
 	{

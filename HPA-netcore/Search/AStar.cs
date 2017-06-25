@@ -81,15 +81,15 @@ namespace HPASharp.Search
 	{
 		private readonly Func<Id<TNode>, bool> _isGoal;
 		private readonly Func<Id<TNode>, int> _calculateHeuristic;
-		private readonly IMap<TNode> _map;
+		private readonly IGraph<TNode> _graph;
 		private readonly SimplePriorityQueue<Id<TNode>> _openQueue;
 		private readonly NodeLookup<TNode> _nodeLookup;
 		
-		public AStar(IMap<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
+		public AStar(IGraph<TNode> graph, Id<TNode> startNodeId, Id<TNode> targetNodeId)
 		{
 			_isGoal = nodeId => nodeId == targetNodeId;
-			_calculateHeuristic = nodeId => map.GetHeuristic(nodeId, targetNodeId);
-			_map = map;
+			_calculateHeuristic = nodeId => graph.GetHeuristic(nodeId, targetNodeId);
+			_graph = graph;
 
 			var estimatedCost = _calculateHeuristic(startNodeId);
 
@@ -106,12 +106,9 @@ namespace HPASharp.Search
 			return _nodeLookup.NodeIsVisited(nodeId) && _nodeLookup.GetNodeValue(nodeId).Status == CellStatus.Closed;
 		}
 
-		public bool CanExpand
-		{
-			get { return _openQueue != null && _openQueue.Count != 0; }
-		}
+		public bool CanExpand => _openQueue != null && _openQueue.Count != 0;
 
-		public static Path<TNode> FindBidiPath(IMap<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
+	    public static Path<TNode> FindBidiPath(IGraph<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
 		{
 			var search1 = new AStar<TNode>(map, startNodeId, targetNodeId);
 			var search2 = new AStar<TNode>(map, targetNodeId, startNodeId);
@@ -183,7 +180,7 @@ namespace HPASharp.Search
 
 		private void ProcessNeighbours(Id<TNode> nodeId, AStarNode<TNode> node)
 		{
-			var connections = _map.GetConnections(nodeId);
+			var connections = _graph.GetConnections(nodeId);
 			foreach (var connection in connections)
 			{
 				var gCost = node.G + connection.Cost;

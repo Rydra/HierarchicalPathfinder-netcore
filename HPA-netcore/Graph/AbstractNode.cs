@@ -25,7 +25,7 @@ namespace HPASharp.Graph
 
 	    public void AddEdge(AbstractEdge edge)
 	    {
-		    if (!Edges.ContainsKey(edge.TargetNodeId) || Edges[edge.TargetNodeId].Info.Level < edge.Info.Level)
+		    if (!Edges.ContainsKey(edge.TargetNodeId))
 		    {
 			    Edges[edge.TargetNodeId] = edge;
 			}
@@ -48,25 +48,7 @@ namespace HPASharp.Graph
     
     public class AbstractEdgeInfo
     {
-        public int Level { get; set; }
-        public bool IsInterClusterEdge { get; set; }
 		public List<Id<AbstractNode>> InnerLowerLevelPath { get; set; }
-
-        public AbstractEdgeInfo(int level = 1, bool interCluster = true)
-        {
-            Level = level;
-            IsInterClusterEdge = interCluster;
-        }
-
-        public override string ToString()
-        {
-            return ("level: " + Level + "; interCluster: " + IsInterClusterEdge);
-        }
-
-        public void PrintInfo()
-        {
-            Console.WriteLine(this.ToString());
-        }
     }
 
     // implements nodes in the abstract graph

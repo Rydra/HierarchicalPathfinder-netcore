@@ -3,7 +3,7 @@
 namespace HPASharp.Infrastructure
 {
     /** Interface to search environment. */
-    public interface IMap<TNode>
+    public interface IGraph<TNode>
     {
         int NrNodes { get; }
         

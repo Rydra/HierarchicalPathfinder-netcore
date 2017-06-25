@@ -34,7 +34,7 @@ namespace HPASharp
     /// Abstract maps represent, as the name implies, an abstraction
     /// built over the concrete map.
     /// </summary>
-    public class HierarchicalMap : IMap<AbstractNode>
+    public class HierarchicalMap : IGraph<AbstractNode>
     {
         public int Height { get; set; }
         public int Width { get; set; }
@@ -124,9 +124,9 @@ namespace HPASharp
 		    return foundCluster;
         }
 
-        public void AddEdge(Id<AbstractNode> sourceNodeId, Id<AbstractNode> destNodeId, int cost, int level = 1, bool inter = false, List<Id<AbstractNode>> pathPathNodes = null)
+        public void AddEdge(Id<AbstractNode> sourceNodeId, Id<AbstractNode> destNodeId, int cost, List<Id<AbstractNode>> pathPathNodes = null)
         {
-	        var edgeInfo = new AbstractEdgeInfo(level, inter);
+	        var edgeInfo = new AbstractEdgeInfo();
 	        edgeInfo.InnerLowerLevelPath = pathPathNodes;
 
 			AbstractGraph.AddEdge(sourceNodeId, destNodeId, cost, edgeInfo);
@@ -285,9 +285,9 @@ namespace HPASharp
             var path = search.FindPath();
             if (path.PathCost >= 0)
             {
-                AddEdge(srcAbstractNodeId, destAbstractNodeId, path.PathCost, level, false, new List<Id<AbstractNode>>(path.PathNodes));
+                AddEdge(srcAbstractNodeId, destAbstractNodeId, path.PathCost, new List<Id<AbstractNode>>(path.PathNodes));
 	            path.PathNodes.Reverse();
-                AddEdge(destAbstractNodeId, srcAbstractNodeId, path.PathCost, level, false, path.PathNodes);
+                AddEdge(destAbstractNodeId, srcAbstractNodeId, path.PathCost, path.PathNodes);
             }
         }
 
