@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using HPASharp.Graph;
 using HPASharp.Infrastructure;
 
@@ -15,7 +16,7 @@ namespace HPASharp.Factories
 	    private int _clusterSize;
 	    private int _maxLevel;
 
-	    readonly Dictionary<Id<AbstractNode>, NodeBackup> nodeBackups = new Dictionary<Id<AbstractNode>, NodeBackup>();
+	    readonly Dictionary<Id<AbstractNode>, List<NodeBackup>> nodeBackups = new Dictionary<Id<AbstractNode>, List<NodeBackup>>();
 
 		public HierarchicalMap CreateHierarchicalMap(ConcreteMap concreteMap, int clusterSize, int maxLevel, EntranceStyle style)
         {
@@ -82,14 +83,21 @@ namespace HPASharp.Factories
             if (map.ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
 			{
 				var existingAbstractNodeId = map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
-			    var nodeInfo = map.AbstractGraph.GetNodeInfo(existingAbstractNodeId);
+			    AbstractNodeInfo nodeInfo = map.AbstractGraph.GetNodeInfo(existingAbstractNodeId);
 
-                var nodeBackup = new NodeBackup(
-                    nodeInfo.Level, 
-					map.GetNodeEdges(concreteNodeId));
+			    var nodeBackupList = new List<NodeBackup>();
+			    for (int level = 1; level <= nodeInfo.Level; level++)
+			    {
+                    map.SetCurrentLevel(level);
+			        nodeBackupList.Add(new NodeBackup(
+			            level,
+			            map.GetNodeEdges(concreteNodeId)));
+			    }
+
+			    nodeBackups[existingAbstractNodeId] = nodeBackupList;
+
+                map.GraphLayers.AddNodeToAllLayers(existingAbstractNodeId, nodeInfo);
                 
-			    map.GraphLayers.AddNodeToAllLayers(existingAbstractNodeId, nodeInfo);
-                nodeBackups[existingAbstractNodeId] = nodeBackup;
 				return map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
 			}
 			
@@ -134,27 +142,35 @@ namespace HPASharp.Factories
 		
 		private void RestoreNodeBackup(HierarchicalMap map, Id<AbstractNode> nodeId)
 		{
-			var abstractGraph = map.AbstractGraph;
-			var nodeBackup = nodeBackups[nodeId];
-			var nodeInfo = abstractGraph.GetNodeInfo(nodeId);
-			nodeInfo.Level = nodeBackup.Level;
+            var nodeBackupList = nodeBackups[nodeId];
+		    int maxLevel = nodeBackupList.Max(x => x.Level);
 
-		    for (int level = nodeBackup.Level; level >= 1; level--)
+		    foreach (var nodeBackup in nodeBackupList)
 		    {
-		        abstractGraph.RemoveEdgesFromAndToNode(nodeId);
-		        abstractGraph.AddNode(nodeId, nodeInfo);
+		        var level = nodeBackup.Level;
+                map.SetCurrentLevel(level);
+
+		        var nodeInfo = map.AbstractGraph.GetNodeInfo(nodeId);
+		        map.AbstractGraph.RemoveEdgesFromAndToNode(nodeId);
+		        map.AbstractGraph.AddNode(nodeId, nodeInfo);
 		        foreach (var edge in nodeBackup.Edges)
 		        {
 		            var targetNodeId = edge.TargetNodeId;
 
 		            map.AddEdge(nodeId, targetNodeId, edge.Cost, edge.Info.InnerLowerLevelPath != null
-                            ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath)
-                            : null);
+		                ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath)
+		                : null);
 
 		            edge.Info.InnerLowerLevelPath?.Reverse();
 
 		            map.AddEdge(targetNodeId, nodeId, edge.Cost, edge.Info.InnerLowerLevelPath);
 		        }
+            }
+
+		    for (int i = maxLevel + 1; i <= map.MaxLevel; i++)
+		    {
+		        map.SetCurrentLevel(i);
+                map.RemoveAbstractNode(nodeId);
 		    }
 
 		    nodeBackups.Remove(nodeId);
