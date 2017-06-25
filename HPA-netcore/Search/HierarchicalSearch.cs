@@ -174,13 +174,5 @@ namespace HPASharp.Search
                          (localX + cluster.Origin.X);
             return result;
         }
-
-        private static int GlobalId2LocalId(int globalId, Cluster cluster, int width)
-        {
-            var globalY = globalId / width;
-            var globalX = globalId % width;
-            return (globalY - cluster.Origin.Y) * cluster.Size.Width +
-                (globalX - cluster.Origin.X);
-        }
     }
 }

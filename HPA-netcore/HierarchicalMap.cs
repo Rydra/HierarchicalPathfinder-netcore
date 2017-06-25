@@ -236,16 +236,6 @@ namespace HPASharp
 
 			return true;
 		}
-
-        private bool IsValidAbstractNodeForLevel(Id<AbstractNode> abstractNodeId, int level)
-        {
-            if (AbstractGraph.NodeExists(abstractNodeId))
-            {
-                return AbstractGraph.GetNodeInfo(abstractNodeId).Level >= level;
-            }
-
-            return false;
-        }
         
         public void CreateHierarchicalEdges()
         {
@@ -280,7 +270,7 @@ namespace HPASharp
                     foreach (var entrance1 in entrancesInClusterGroup)
                         foreach (var entrance2 in entrancesInClusterGroup)
                         {
-                            if (entrance1 == entrance2 || !IsValidAbstractNodeForLevel(entrance1.AbstractNodeId, level) || !IsValidAbstractNodeForLevel(entrance2.AbstractNodeId, level))
+                            if (entrance1 == entrance2)
                                 continue;
 
                             AddEdgesBetweenAbstractNodes(entrance1.AbstractNodeId, entrance2.AbstractNodeId, level);
@@ -311,9 +301,9 @@ namespace HPASharp
                 if (cluster.Origin.X >= currentClusterX0 && cluster.Origin.X <= currentClusterX1 &&
                     cluster.Origin.Y >= currentClusterY0 && cluster.Origin.Y <= currentClusterY1)
                 {
-                    foreach (var entrance in cluster.EntrancePoints)
+                    foreach (var entrance in cluster.EntrancePoints.Where(x => AbstractGraph.NodeExists(x.AbstractNodeId)))
                     {
-                        if (abstractNodeInfo.Id == entrance.AbstractNodeId || !IsValidAbstractNodeForLevel(entrance.AbstractNodeId, level))
+                        if (abstractNodeInfo.Id == entrance.AbstractNodeId)
                             continue;
                         
                         AddEdgesBetweenAbstractNodes(abstractNodeInfo.Id, entrance.AbstractNodeId, level);
