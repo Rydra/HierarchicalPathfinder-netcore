@@ -52,7 +52,9 @@ namespace HPASharp.Factories
 	    public Id<AbstractNode> InsertAbstractNode(HierarchicalMap map, Position pos)
 		{
 			var nodeId = Id<ConcreteNode>.From(pos.Y * map.Width + pos.X);
-			var abstractNodeId = InsertNodeIntoHierarchicalMap(map, nodeId, pos);
+
+            map.SetCurrentLevel(1);
+			Id<AbstractNode> abstractNodeId = InsertNodeIntoHierarchicalMap(map, nodeId, pos);
 			map.AddHierarchicalEdgesForAbstractNode(abstractNodeId);
 			return abstractNodeId;
 		}
@@ -74,18 +76,20 @@ namespace HPASharp.Factories
 		// x and y are the positions where I want to put the node
 		private Id<AbstractNode> InsertNodeIntoHierarchicalMap(HierarchicalMap map, Id<ConcreteNode> concreteNodeId, Position pos)
 		{
-		    map.SetCurrentLevel(1);
-
             // If the node already existed (for instance, it was the an entrance point already
             // existing in the graph, we need to keep track of the previous status in order
             // to be able to restore it once we delete this STAL
             if (map.ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
 			{
 				var existingAbstractNodeId = map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
-				var nodeBackup = new NodeBackup(
-					map.AbstractGraph.GetNodeInfo(existingAbstractNodeId).Level, 
+			    var nodeInfo = map.AbstractGraph.GetNodeInfo(existingAbstractNodeId);
+
+                var nodeBackup = new NodeBackup(
+                    nodeInfo.Level, 
 					map.GetNodeEdges(concreteNodeId));
-				nodeBackups[existingAbstractNodeId] = nodeBackup;
+                
+			    map.GraphLayers.AddNodeToAllLayers(existingAbstractNodeId, nodeInfo);
+                nodeBackups[existingAbstractNodeId] = nodeBackup;
 				return map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
 			}
 			
@@ -101,19 +105,13 @@ namespace HPASharp.Factories
 
 			var info = new AbstractNodeInfo(
 				abstractNodeId,
-				1,
+				map.MaxLevel,
 				cluster.Id,
 				pos,
 				concreteNodeId);
 
-		    for (int i = 1; i <= map.MaxLevel; i++)
-		    {
-		        map.SetCurrentLevel(i);
-		        map.AbstractGraph.AddNode(abstractNodeId, info);
-		    }
-
-		    map.SetCurrentLevel(1);
-
+		    map.GraphLayers.AddNodeToAllLayers(abstractNodeId, info);
+            
             foreach (var entrancePoint in cluster.EntrancePoints)
 			{
 				if (cluster.AreConnected(abstractNodeId, entrancePoint.AbstractNodeId))
@@ -140,23 +138,29 @@ namespace HPASharp.Factories
 			var nodeBackup = nodeBackups[nodeId];
 			var nodeInfo = abstractGraph.GetNodeInfo(nodeId);
 			nodeInfo.Level = nodeBackup.Level;
-			abstractGraph.RemoveEdgesFromAndToNode(nodeId);
-			abstractGraph.AddNode(nodeId, nodeInfo);
-			foreach (var edge in nodeBackup.Edges)
-			{
-				var targetNodeId = edge.TargetNodeId;
 
-				map.AddEdge(nodeId, targetNodeId, edge.Cost,
-					edge.Info.Level, edge.Info.IsInterClusterEdge,
-					edge.Info.InnerLowerLevelPath != null ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath) : null);
+		    for (int level = nodeBackup.Level; level >= 1; level--)
+		    {
+		        abstractGraph.RemoveEdgesFromAndToNode(nodeId);
+		        abstractGraph.AddNode(nodeId, nodeInfo);
+		        foreach (var edge in nodeBackup.Edges)
+		        {
+		            var targetNodeId = edge.TargetNodeId;
 
-				edge.Info.InnerLowerLevelPath?.Reverse();
+		            map.AddEdge(nodeId, targetNodeId, edge.Cost,
+		                edge.Info.Level, edge.Info.IsInterClusterEdge,
+		                edge.Info.InnerLowerLevelPath != null
+		                    ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath)
+		                    : null);
 
-				map.AddEdge(targetNodeId, nodeId, edge.Cost,
-					edge.Info.Level, edge.Info.IsInterClusterEdge, edge.Info.InnerLowerLevelPath);
-			}
+		            edge.Info.InnerLowerLevelPath?.Reverse();
 
-			nodeBackups.Remove(nodeId);
+		            map.AddEdge(targetNodeId, nodeId, edge.Cost,
+		                edge.Info.Level, edge.Info.IsInterClusterEdge, edge.Info.InnerLowerLevelPath);
+		        }
+		    }
+
+		    nodeBackups.Remove(nodeId);
 		}
 
 		private void CreateEdges(List<Entrance> entrances, List<Cluster> clusters)
@@ -166,7 +170,6 @@ namespace HPASharp.Factories
 				CreateEntranceEdges(entrance, _hierarchicalMap.Type);
 			}
 
-		    _hierarchicalMap.SetCurrentLevel(1);
             foreach (var cluster in clusters)
 			{
 				cluster.CreateIntraClusterEdges();
@@ -216,8 +219,7 @@ namespace HPASharp.Factories
 					}
 					break;
 			}
-
-
+            
 		    for (int i = 1; i <= level; i++)
 		    {
                 _hierarchicalMap.SetCurrentLevel(i);
@@ -228,7 +230,9 @@ namespace HPASharp.Factories
         
 		private void CreateIntraClusterEdges(Cluster cluster)
 		{
-			foreach (var point1 in cluster.EntrancePoints)
+		    _hierarchicalMap.SetCurrentLevel(1);
+
+            foreach (var point1 in cluster.EntrancePoints)
 			foreach (var point2 in cluster.EntrancePoints)
 			{
 				if (point1 != point2 && cluster.AreConnected(point1.AbstractNodeId, point2.AbstractNodeId))

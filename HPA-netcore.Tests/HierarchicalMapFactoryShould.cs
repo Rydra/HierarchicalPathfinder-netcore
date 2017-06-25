@@ -16,7 +16,8 @@ namespace HPA_netcore.Tests
             var abstractMapFactory = new HierarchicalMapFactory();
             var _abstractMap = abstractMapFactory.CreateHierarchicalMap(_concreteMap, 10, 2, EntranceStyle.EndEntrance);
 
-            var numberOfEdges = _abstractMap.GraphByLevel[2].Nodes.Values.SelectMany(x => x.Edges).Count();
+            _abstractMap.SetCurrentLevel(2);
+            var numberOfEdges = _abstractMap.AbstractGraph.Nodes.Values.SelectMany(x => x.Edges).Count();
             Assert.Equal(46, numberOfEdges);
         }
 
@@ -31,13 +32,15 @@ namespace HPA_netcore.Tests
             var id1 = abstractMapFactory.InsertAbstractNode(_abstractMap, new Position(18, 0));
             var id2 = abstractMapFactory.InsertAbstractNode(_abstractMap, new Position(20, 0));
 
-            var numberOfEdges = _abstractMap.GraphByLevel[2].Nodes.Values.SelectMany(x => x.Edges).Count();
+            _abstractMap.SetCurrentLevel(2);
+            var numberOfEdges = _abstractMap.AbstractGraph.Nodes.Values.SelectMany(x => x.Edges).Count();
             Assert.Equal(56, numberOfEdges);
 
             abstractMapFactory.RemoveAbstractNode(_abstractMap, id1);
             abstractMapFactory.RemoveAbstractNode(_abstractMap, id2);
 
-            numberOfEdges = _abstractMap.GraphByLevel[2].Nodes.Values.SelectMany(x => x.Edges).Count();
+            _abstractMap.SetCurrentLevel(2);
+            numberOfEdges = _abstractMap.AbstractGraph.Nodes.Values.SelectMany(x => x.Edges).Count();
             Assert.Equal(46, numberOfEdges);
         }
     }

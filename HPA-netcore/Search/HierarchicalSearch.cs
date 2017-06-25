@@ -9,35 +9,36 @@ namespace HPASharp.Search
     {
         public List<AbstractPathNode> DoHierarchicalSearch(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int maxSearchLevel, int maxPathsToRefine = int.MaxValue)
         {
-	        List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, maxSearchLevel, true);
+            List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, maxSearchLevel, true);
 
             if (path.Count == 0)
 				return path;
 
             for (var level = maxSearchLevel; level > 1; level--)
+            {
                 path = RefineAbstractPath(map, path, level, maxPathsToRefine);
+            }
 
             return path;
         }
 
         private List<AbstractPathNode> GetPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int level, bool mainSearch)
         {
-            map.SetCurrentLevelForSearches(level);
-            map.SetCurrentLevel(level);
-            var nodeInfo = map.AbstractGraph.GetNodeInfo(startNodeId);
+            // This is a hack to search higher level paths...
+            map.SetCurrentLevel(level + 1);
 
             // TODO: This could be perfectly replaced by cached paths in the clusters!
-	        Path<AbstractNode> path;
+            Path<AbstractNode> path;
 	        if (!mainSearch)
 	        {
-	            map.SetCurrentLevel(level + 1);
+                // We need to search to a higher level edge
                 var edge = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId];
 				path = new Path<AbstractNode>(edge.Info.InnerLowerLevelPath, edge.Cost);
 			}
 	        else
 	        {
                 map.SetAllMapAsCurrentCluster();
-		        var search = new AStar<AbstractNode>(map, startNodeId, targetNodeId);
+                var search = new AStar<AbstractNode>(map, startNodeId, targetNodeId);
 		        path = search.FindPath();
 	        }
 
@@ -57,6 +58,9 @@ namespace HPASharp.Search
         
         public List<AbstractPathNode> RefineAbstractPath(HierarchicalMap map, List<AbstractPathNode> path, int level, int maxPathsToRefine = int.MaxValue)
         {
+            // We are refining to a lower level
+            map.SetCurrentLevel(level - 1);
+
             var refinedAbstractPath = new List<AbstractPathNode>();
             var calculatedPaths = 0;
 

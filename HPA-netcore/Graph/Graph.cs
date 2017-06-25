@@ -115,6 +115,11 @@ namespace HPASharp.Graph
             return Nodes[nodeId];
         }
 
+	    public bool NodeExists(Id<TNode> nodeId)
+	    {
+	        return Nodes.ContainsKey(nodeId);
+	    }
+
         public TNodeInfo GetNodeInfo(Id<TNode> nodeId)
         {
             return GetNode(nodeId).Info;
