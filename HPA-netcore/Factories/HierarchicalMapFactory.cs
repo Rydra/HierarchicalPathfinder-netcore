@@ -46,7 +46,11 @@ namespace HPASharp.Factories
 			}
 			else
 			{
-				map.RemoveAbstractNode(nodeId);
+			    for (int i = 1; i <= map.MaxLevel; i++)
+			    {
+                    map.SetCurrentLevel(i);
+			        map.RemoveAbstractNode(nodeId);
+			    }
 			}
 		}
 		

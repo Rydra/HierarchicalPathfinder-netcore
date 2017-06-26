@@ -132,24 +132,19 @@ namespace HPASharp
 		
 	    public void RemoveAbstractNode(Id<AbstractNode> abstractNodeId)
 	    {
-	        for (int level = 1; level <= MaxLevel; level++)
+	        AbstractNodeInfo abstractNodeInfo = AbstractGraph.GetNodeInfo(abstractNodeId);
+            Cluster cluster = Clusters[abstractNodeInfo.ClusterId.IdValue];
+	        cluster.RemoveLastEntranceRecord();
+	        ConcreteNodeIdToAbstractNodeIdMap.Remove(abstractNodeInfo.ConcreteNodeId);
+            
+	        if (AbstractGraph.NodeExists(abstractNodeId))
 	        {
-                SetCurrentLevel(level);
-	            if (AbstractGraph.NodeExists(abstractNodeId))
-	            {
-	                AbstractNodeInfo abstractNodeInfo = AbstractGraph.GetNodeInfo(abstractNodeId);
-
-	                Cluster cluster = Clusters[abstractNodeInfo.ClusterId.IdValue];
-	                cluster.RemoveLastEntranceRecord();
-
-	                ConcreteNodeIdToAbstractNodeIdMap.Remove(abstractNodeInfo.ConcreteNodeId);
-	                AbstractGraph.RemoveEdgesFromAndToNode(abstractNodeId);
-	                AbstractGraph.Remove(abstractNodeId);
-	            }
+	            AbstractGraph.RemoveEdgesFromAndToNode(abstractNodeId);
+	            AbstractGraph.Remove(abstractNodeId);
 	        }
 	    }
 
-	    public bool PositionInCurrentCluster(Position position)
+        public bool PositionInCurrentCluster(Position position)
 		{
 			var y = position.Y;
 			var x = position.X;
