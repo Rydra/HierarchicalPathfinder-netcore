@@ -6,7 +6,6 @@ using HPASharp.Infrastructure;
 
 namespace HPASharp
 {
-
     public enum TileType
     {
         Hex,
@@ -48,9 +47,7 @@ namespace HPASharp
 
 	        foreach (var slicedMapNode in slicedConcreteMap.Graph.Nodes.Values)
 	        {
-		        var globalConcreteNode =
-			        Graph.GetNode(GetNodeIdFromPos(horizOrigin + slicedMapNode.Info.Position.X,
-				        vertOrigin + slicedMapNode.Info.Position.Y));
+		        ConcreteNode globalConcreteNode = Graph.GetNode(GetNodeIdFromPos(horizOrigin + slicedMapNode.Info.Position.X, vertOrigin + slicedMapNode.Info.Position.Y));
 				slicedMapNode.Info.IsObstacle = globalConcreteNode.Info.IsObstacle;
 				slicedMapNode.Info.Cost = globalConcreteNode.Info.Cost;
 			}

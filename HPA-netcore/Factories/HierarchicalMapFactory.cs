@@ -66,8 +66,8 @@ namespace HPASharp.Factories
 
 	    private class NodeBackup
 	    {
-			public int Level { get; private set; }
-			public List<AbstractEdge> Edges { get; private set; }
+			public int Level { get; }
+			public List<AbstractEdge> Edges { get; }
 
 		    public NodeBackup(int level, List<AbstractEdge> edges)
 		    {
@@ -81,36 +81,41 @@ namespace HPASharp.Factories
 		// x and y are the positions where I want to put the node
 		private Id<AbstractNode> InsertNodeIntoHierarchicalMap(HierarchicalMap map, Id<ConcreteNode> concreteNodeId, Position pos)
 		{
+		    void SaveBackup(Id<AbstractNode> existingAbstractNodeId, AbstractNodeInfo nodeInfo)
+		    {
+		        var nodeBackupList = new List<NodeBackup>();
+		        for (int level = 1; level <= nodeInfo.Level; level++)
+		        {
+		            map.SetCurrentLevel(level);
+		            nodeBackupList.Add(new NodeBackup(
+		                level,
+		                map.GetNodeEdges(concreteNodeId)));
+		        }
+
+		        nodeBackups[existingAbstractNodeId] = nodeBackupList;
+            }
+
             // If the node already existed (for instance, it was the an entrance point already
             // existing in the graph, we need to keep track of the previous status in order
             // to be able to restore it once we delete this STAL
             if (map.ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
 			{
-				var existingAbstractNodeId = map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
+				Id<AbstractNode> existingAbstractNodeId = map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
 			    AbstractNodeInfo nodeInfo = map.AbstractGraph.GetNodeInfo(existingAbstractNodeId);
 
-			    var nodeBackupList = new List<NodeBackup>();
-			    for (int level = 1; level <= nodeInfo.Level; level++)
-			    {
-                    map.SetCurrentLevel(level);
-			        nodeBackupList.Add(new NodeBackup(
-			            level,
-			            map.GetNodeEdges(concreteNodeId)));
-			    }
-
-			    nodeBackups[existingAbstractNodeId] = nodeBackupList;
+                SaveBackup(existingAbstractNodeId, nodeInfo);
 
                 map.GraphLayers.AddNodeToAllLayers(existingAbstractNodeId, nodeInfo);
                 
 				return map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
 			}
 			
-			var cluster = map.FindClusterForPosition(pos);
+			Cluster cluster = map.FindClusterForPosition(pos);
 
 			// create global entrance
 			var abstractNodeId = Id<AbstractNode>.From(map.NrNodes);
 			
-			var entrance = cluster.AddEntrance(abstractNodeId, new Position(pos.X - cluster.Origin.X, pos.Y - cluster.Origin.Y));
+			EntrancePoint entrance = cluster.AddEntrance(abstractNodeId, new Position(pos.X - cluster.Origin.X, pos.Y - cluster.Origin.Y));
 			cluster.UpdatePathsForLocalEntrance(entrance);
 
 			map.ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId] = abstractNodeId;
@@ -184,7 +189,7 @@ namespace HPASharp.Factories
 		{
 			foreach (var entrance in entrances)
 			{
-				CreateEntranceEdges(entrance, _hierarchicalMap.Type);
+				CreateInterClusterEdges(entrance, _hierarchicalMap.Type);
 			}
 
             foreach (var cluster in clusters)
@@ -196,52 +201,58 @@ namespace HPASharp.Factories
 			_hierarchicalMap.CreateHierarchicalEdges();
 		}
 
-		private void CreateEntranceEdges(Entrance entrance, AbsType type)
+		private void CreateInterClusterEdges(Entrance entrance, AbsType type)
 		{
-			var level = entrance.GetEntranceLevel(_clusterSize, _maxLevel);
+		    int GetCost(Orientation orientation)
+		    {
+		        int cost = Constants.COST_ONE;
+		        switch (type)
+		        {
+		            case AbsType.ABSTRACT_TILE:
+		            case AbsType.ABSTRACT_OCTILE_UNICOST:
+		                // Inter-edges: cost 1
+		                cost = Constants.COST_ONE;
+		                break;
+		            case AbsType.ABSTRACT_OCTILE:
+		            {
+		                int unitCost;
+		                switch (orientation)
+		                {
+		                    case Orientation.Horizontal:
+		                    case Orientation.Vertical:
+		                        unitCost = Constants.COST_ONE;
+		                        break;
+		                    case Orientation.Hdiag2:
+		                    case Orientation.Hdiag1:
+		                    case Orientation.Vdiag1:
+		                    case Orientation.Vdiag2:
+		                        unitCost = (Constants.COST_ONE * 34) / 24;
+		                        break;
+		                    default:
+		                        unitCost = -1;
+		                        break;
+		                }
 
-			var srcAbstractNodeId = _hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[entrance.SrcNode.NodeId];
-			var destAbstractNodeId = _hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[entrance.DestNode.NodeId];
-			
-			var orientation = entrance.Orientation;
-			int cost = Constants.COST_ONE;
-			switch (type)
-			{
-				case AbsType.ABSTRACT_TILE:
-				case AbsType.ABSTRACT_OCTILE_UNICOST:
-					// Inter-edges: cost 1
-					cost = Constants.COST_ONE;
-					break;
-				case AbsType.ABSTRACT_OCTILE:
-					{
-						int unitCost;
-						switch (orientation)
-						{
-							case Orientation.Horizontal:
-							case Orientation.Vertical:
-								unitCost = Constants.COST_ONE;
-								break;
-							case Orientation.Hdiag2:
-							case Orientation.Hdiag1:
-							case Orientation.Vdiag1:
-							case Orientation.Vdiag2:
-								unitCost = (Constants.COST_ONE * 34) / 24;
-								break;
-							default:
-								unitCost = -1;
-								break;
-						}
+		                cost = unitCost;
+		            }
+		                break;
+		        }
 
-						cost = unitCost;
-					}
-					break;
-			}
+		        return cost;
+		    }
+
+			int level = entrance.GetEntranceLevel(_clusterSize, _maxLevel);
+
+			Id<AbstractNode> srcAbstractNodeId = _hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[entrance.SrcNode.NodeId];
+			Id<AbstractNode> destAbstractNodeId = _hierarchicalMap.ConcreteNodeIdToAbstractNodeIdMap[entrance.DestNode.NodeId];
+
+		    int costToReach = GetCost(entrance.Orientation);
             
 		    for (int i = 1; i <= level; i++)
 		    {
                 _hierarchicalMap.SetCurrentLevel(i);
-		        _hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, cost, new AbstractEdgeInfo());
-		        _hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, cost, new AbstractEdgeInfo());
+		        _hierarchicalMap.AbstractGraph.AddEdge(srcAbstractNodeId, destAbstractNodeId, costToReach, new AbstractEdgeInfo());
+		        _hierarchicalMap.AbstractGraph.AddEdge(destAbstractNodeId, srcAbstractNodeId, costToReach, new AbstractEdgeInfo());
 		    }
 		}
         
@@ -333,10 +344,9 @@ namespace HPASharp.Factories
 			Cluster cluster,
             ref int currentEntranceId)
         {
-            Func<int, Tuple<ConcreteNode, ConcreteNode>> getNodesForRow =
-                row => Tuple.Create(GetNode(column, row), GetNode(column + 1, row));
+            Tuple<ConcreteNode, ConcreteNode> GetNodesForRow(int row) => Tuple.Create(GetNode(column, row), GetNode(column + 1, row));
 
-            return CreateEntrancesAlongEdge(rowStart, rowEnd, clusterOnLeft, cluster, ref currentEntranceId, getNodesForRow, Orientation.Horizontal);
+            return CreateEntrancesAlongEdge(rowStart, rowEnd, clusterOnLeft, cluster, ref currentEntranceId, GetNodesForRow, Orientation.Horizontal);
         }
 
         private List<Entrance> CreateEntrancesOnTop(
@@ -347,10 +357,9 @@ namespace HPASharp.Factories
 			Cluster cluster,
             ref int currentEntranceId)
         {
-            Func<int, Tuple<ConcreteNode, ConcreteNode>> getNodesForColumn =
-                column => Tuple.Create(GetNode(column, row), GetNode(column, row + 1));
+            Tuple<ConcreteNode, ConcreteNode> GetNodesForColumn(int column) => Tuple.Create(GetNode(column, row), GetNode(column, row + 1));
 
-            return CreateEntrancesAlongEdge(colStart, colEnd, clusterOnTop, cluster, ref currentEntranceId, getNodesForColumn, Orientation.Vertical);
+            return CreateEntrancesAlongEdge(colStart, colEnd, clusterOnTop, cluster, ref currentEntranceId, GetNodesForColumn, Orientation.Vertical);
         }
 
         private List<Entrance> CreateEntrancesAlongEdge(

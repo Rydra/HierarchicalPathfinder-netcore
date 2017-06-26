@@ -42,8 +42,8 @@ namespace HPASharp.Search
 	
 	public class Path<TNode>
 	{
-		public int PathCost { get; private set; }
-		public List<Id<TNode>> PathNodes { get; private set; }
+		public int PathCost { get; }
+		public List<Id<TNode>> PathNodes { get; }
 
 		public Path(List<Id<TNode>> pathNodes, int pathCost)
 		{
@@ -54,7 +54,7 @@ namespace HPASharp.Search
 
 	public class NodeLookup<TNode>
 	{
-		private Dictionary<Id<TNode>, AStarNode<TNode>> _astarNodes;
+		private readonly Dictionary<Id<TNode>, AStarNode<TNode>> _astarNodes;
 
 		public NodeLookup()
 		{
@@ -108,50 +108,50 @@ namespace HPASharp.Search
 
 		public bool CanExpand => _openQueue != null && _openQueue.Count != 0;
 
-	    public static Path<TNode> FindBidiPath(IGraph<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
-		{
-			var search1 = new AStar<TNode>(map, startNodeId, targetNodeId);
-			var search2 = new AStar<TNode>(map, targetNodeId, startNodeId);
-			var expand = 0;
+	 //   public static Path<TNode> FindBidiPath(IGraph<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
+		//{
+		//	var search1 = new AStar<TNode>(map, startNodeId, targetNodeId);
+		//	var search2 = new AStar<TNode>(map, targetNodeId, startNodeId);
+		//	var expand = 0;
 
-			while (search1.CanExpand && search2.CanExpand)
-			{
-				var frontier = search1.Expand();
-				expand++;
-				if (search2.NodeIsClosed(frontier)) //TODO: Need to add a condition to tell that the node was reachable
-				{
-					return ReconstructPath(search1, search2, frontier);
-				}
+		//	while (search1.CanExpand && search2.CanExpand)
+		//	{
+		//		var frontier = search1.Expand();
+		//		expand++;
+		//		if (search2.NodeIsClosed(frontier)) //TODO: Need to add a condition to tell that the node was reachable
+		//		{
+		//			return ReconstructPath(search1, search2, frontier);
+		//		}
 
-				frontier = search2.Expand();
-				expand++;
-				if (search1.NodeIsClosed(frontier)) //TODO: Need to add a condition to tell that the node was reachable
-				{
-					return ReconstructPath(search1, search2, frontier);
-				}
-			}
+		//		frontier = search2.Expand();
+		//		expand++;
+		//		if (search1.NodeIsClosed(frontier)) //TODO: Need to add a condition to tell that the node was reachable
+		//		{
+		//			return ReconstructPath(search1, search2, frontier);
+		//		}
+		//	}
 
-			return new Path<TNode>(new List<Id<TNode>>(), -1);
-		}
+		//	return new Path<TNode>(new List<Id<TNode>>(), -1);
+		//}
 
-		private static Path<TNode> ReconstructPath(AStar<TNode> search1, AStar<TNode> search2, Id<TNode> frontier)
-		{
-			var halfPath1 = search1.ReconstructPathFrom(frontier);
-			var halfPath2 = search2.ReconstructPathFrom(frontier);
+		//private static Path<TNode> ReconstructPath(AStar<TNode> search1, AStar<TNode> search2, Id<TNode> frontier)
+		//{
+		//	var halfPath1 = search1.ReconstructPathFrom(frontier);
+		//	var halfPath2 = search2.ReconstructPathFrom(frontier);
 
-			halfPath2.PathNodes.Reverse();
-			var p = halfPath2.PathNodes;
-			if (p.Count > 0)
-			{
-				for (int i = 1; i < p.Count; i++)
-				{
-					halfPath1.PathNodes.Add(p[i]);
-				}
+		//	halfPath2.PathNodes.Reverse();
+		//	var p = halfPath2.PathNodes;
+		//	if (p.Count > 0)
+		//	{
+		//		for (int i = 1; i < p.Count; i++)
+		//		{
+		//			halfPath1.PathNodes.Add(p[i]);
+		//		}
 
-			}
+		//	}
 
-			return halfPath1;
-		}
+		//	return halfPath1;
+		//}
 
 		public Path<TNode> FindPath()
 		{

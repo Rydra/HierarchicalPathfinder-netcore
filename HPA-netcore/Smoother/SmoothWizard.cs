@@ -49,10 +49,10 @@ namespace HPASharp.Smoother
         {
 			var smoothedPath = new List<IPathNode>();
             var smoothedConcretePath = new List<ConcretePathNode>();
-			var index = 0;
-            for (; index < InitialPath.Count && InitialPath[index] is ConcretePathNode; index++)
+			var pathNodePosition = 0;
+            for (; pathNodePosition < InitialPath.Count && InitialPath[pathNodePosition] is ConcretePathNode; pathNodePosition++)
             {
-				var pathNode = (ConcretePathNode)InitialPath[index];
+				var pathNode = (ConcretePathNode)InitialPath[pathNodePosition];
 				if (smoothedConcretePath.Count == 0)
 					smoothedConcretePath.Add(pathNode);
 
@@ -77,7 +77,7 @@ namespace HPASharp.Smoother
 					smoothedConcretePath.Add(pathNode);
                 }
 
-                index = DecideNextNodeToConsider(index);
+                pathNodePosition = DecideNextPathNodeToConsider(pathNodePosition);
             }
 
 	        foreach (var pathNode in smoothedConcretePath)
@@ -85,15 +85,15 @@ namespace HPASharp.Smoother
 				smoothedPath.Add(pathNode);
 			}
 
-	        for (;index < InitialPath.Count; index++)
+	        for (;pathNodePosition < InitialPath.Count; pathNodePosition++)
 		    {
-				smoothedPath.Add(InitialPath[index]);
+				smoothedPath.Add(InitialPath[pathNodePosition]);
 			}
 
 			return smoothedPath;
         }
 
-	    private int DecideNextNodeToConsider(int index)
+	    private int DecideNextPathNodeToConsider(int index)
 	    {
 		    var newIndex = index;
 		    for (var dir = (int) Direction.North; dir <= (int) Direction.NorthWest; dir++)
@@ -126,8 +126,6 @@ namespace HPASharp.Smoother
 
 	    private static bool AreAdjacent(Position a, Position b)
         {
-            // if the Manhattan distance between a and b is > 2, then they are not 
-            // (At least on OCTILE)
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) <= 2;
         }
 

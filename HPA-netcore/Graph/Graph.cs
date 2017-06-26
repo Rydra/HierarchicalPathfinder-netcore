@@ -62,7 +62,6 @@ namespace HPASharp.Graph
             }
         }
 
-
 	    public abstract int GetHeuristic(Id<TNode> startNodeId, Id<TNode> targetNodeId);
 
 	    public IEnumerable<Connection<TNode>> GetConnections(Id<TNode> nodeId)
@@ -120,7 +119,7 @@ namespace HPASharp.Graph
 
         public TNodeInfo GetNodeInfo(Id<TNode> nodeId)
         {
-            return GetNode(nodeId).Info;
+            return Nodes[nodeId].Info;
         }
         
         public IDictionary<Id<TNode>, TEdge> GetEdges(Id<TNode> nodeId)

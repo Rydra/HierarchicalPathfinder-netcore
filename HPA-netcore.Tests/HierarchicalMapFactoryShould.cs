@@ -5,10 +5,6 @@ using HPASharp;
 using HPASharp.Factories;
 using HPASharp.Graph;
 using HPASharp.Infrastructure;
-using HPASharp.Passabilities;
-using HPASharp.Search;
-using HPASharp.Smoother;
-using Moq;
 using Xunit;
 
 namespace HPA_netcore.Tests
@@ -25,6 +21,23 @@ namespace HPA_netcore.Tests
                 .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
         }
 
+        [Theory]
+        [ClassData(typeof(TestDataGenerator))]
+        public void GenerateGraphAndProperlyInsertNewNodesAtDemand(Position p1, Position p2, ExpectationForGraph lvl1Graph, ExpectationForGraph lvl2Graph)
+        {
+            new ScenarioMaker()
+                .GivenTheSampleMap()
+                .GivenAnAbstractMapOverTheConcreteOne(10, 2, EntranceStyle.EndEntrance)
+                .GivenANewNodeAddedToThePosition(p1)
+                .GivenANewNodeAddedToThePosition(p2)
+                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: lvl2Graph.ExpectedNodes, edges: lvl2Graph.ExpectedEdges)
+                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: lvl1Graph.ExpectedNodes, edges: lvl1Graph.ExpectedEdges)
+                .RestoreTheGraph()
+                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
+                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
+        }
+
+
         public class ExpectationForGraph
         {
             public ExpectationForGraph(int expectedNodes, int expectedEdges)
@@ -36,6 +49,7 @@ namespace HPA_netcore.Tests
             public int ExpectedEdges { get; }
             public int ExpectedNodes { get; }
         }
+
 
         private class TestDataGenerator : IEnumerable<object[]>
         {
@@ -60,76 +74,6 @@ namespace HPA_netcore.Tests
             public IEnumerator<object[]> GetEnumerator() => _data.GetEnumerator();
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        [Theory]
-        [ClassData(typeof(TestDataGenerator))]
-        public void GenerateGraphAndProperlyInsertNewNodesAtDemand(Position p1, Position p2, ExpectationForGraph lvl1Graph, ExpectationForGraph lvl2Graph)
-        {
-            new ScenarioMaker()
-                .GivenTheSampleMap()
-                .GivenAnAbstractMapOverTheConcreteOne(10, 2, EntranceStyle.EndEntrance)
-                .GivenANewNodeAddedToThePosition(p1)
-                .GivenANewNodeAddedToThePosition(p2)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: lvl2Graph.ExpectedNodes, edges: lvl2Graph.ExpectedEdges)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: lvl1Graph.ExpectedNodes, edges: lvl1Graph.ExpectedEdges)
-                .RestoreTheGraph()
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
-        }
-
-        [Fact]
-        public void GenerateGraphAndAddPointsOverEntrances()
-        {
-            var POSITION_IN_ENTRANCE_LVL2_1 = new Position(0, 19);
-            var A_POSITION = new Position(20, 0);
-
-            new ScenarioMaker()
-                .GivenTheSampleMap()
-                .GivenAnAbstractMapOverTheConcreteOne(10, 2, EntranceStyle.EndEntrance)
-                .GivenANewNodeAddedToThePosition(POSITION_IN_ENTRANCE_LVL2_1)
-                .GivenANewNodeAddedToThePosition(A_POSITION)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 13, edges: 54)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 67, edges: 262)
-                .RestoreTheGraph()
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
-        }
-
-        [Fact]
-        public void GenerateGraphAndAddPointsOverEntrances2()
-        {
-            var POSITION_IN_ENTRANCE_LVL2_1 = new Position(0, 19);
-            var POSITION_IN_ENTRANCE_LVL2_2 = new Position(39, 19);
-
-            new ScenarioMaker()
-                .GivenTheSampleMap()
-                .GivenAnAbstractMapOverTheConcreteOne(10, 2, EntranceStyle.EndEntrance)
-                .GivenANewNodeAddedToThePosition(POSITION_IN_ENTRANCE_LVL2_1)
-                .GivenANewNodeAddedToThePosition(POSITION_IN_ENTRANCE_LVL2_2)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260)
-                .RestoreTheGraph()
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
-        }
-
-        [Fact]
-        public void GenerateGraphAndAddPointsOverEntrancesJustFirstLevel()
-        {
-            var POSITION_IN_ENTRANCE_LVL1 = new Position(1, 9);
-            var POSITION_IN_ENTRANCE_LVL2 = new Position(39, 19);
-
-            new ScenarioMaker()
-                .GivenTheSampleMap()
-                .GivenAnAbstractMapOverTheConcreteOne(10, 2, EntranceStyle.EndEntrance)
-                .GivenANewNodeAddedToThePosition(POSITION_IN_ENTRANCE_LVL1)
-                .GivenANewNodeAddedToThePosition(POSITION_IN_ENTRANCE_LVL2)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 13, edges: 48)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260)
-                .RestoreTheGraph()
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 2, nodes: 12, edges: 46)
-                .AssertGraphAtLevelHasExpectedEdgesAndNodes(level: 1, nodes: 66, edges: 260);
         }
 
 
