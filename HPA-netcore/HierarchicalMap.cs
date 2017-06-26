@@ -54,6 +54,7 @@ namespace HPASharp
         // NOTE: It is currently just used for insert and remove STAL
         public Dictionary<Id<ConcreteNode>, Id<AbstractNode>> ConcreteNodeIdToAbstractNodeIdMap { get; set; }
         public AbsType Type { get; set; }
+        public ConcreteMap ConcreteMap { get; set; }
 		
 		private int currentClusterY0;
 
@@ -87,6 +88,7 @@ namespace HPASharp
             SetType(concreteMap.TileType);
             Height = concreteMap.Height;
             Width = concreteMap.Width;
+            ConcreteMap = concreteMap;
             ConcreteNodeIdToAbstractNodeIdMap = new Dictionary<Id<ConcreteNode>, Id<AbstractNode>>();
 
             Clusters = new List<Cluster>();
@@ -239,7 +241,7 @@ namespace HPASharp
 
         public void AddEdgesBetweenAbstractNodes(Id<AbstractNode> srcAbstractNodeId, Id<AbstractNode> destAbstractNodeId, int level)
         {
-            var search = new AStar<AbstractNode>(GraphLayers.GetSearchLayer(), srcAbstractNodeId, destAbstractNodeId);
+            var search = new Pathfinder<AbstractNode>(GraphLayers.GetSearchLayer(), srcAbstractNodeId, destAbstractNodeId);
             var path = search.FindPath();
             if (path.PathCost >= 0)
             {

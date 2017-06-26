@@ -100,7 +100,6 @@ namespace HPA_netcore.Tests
 
             public ScenarioMaker GivenAnAbstractMapOverTheConcreteOne(int clusterSize, int maxLevel, EntranceStyle entranceStyle)
             {
-                
                 _abstractMap = _abstractMapFactory.CreateHierarchicalMap(_concreteMap, clusterSize, maxLevel, entranceStyle);
                 return this;
             }

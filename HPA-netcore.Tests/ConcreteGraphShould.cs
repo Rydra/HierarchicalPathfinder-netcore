@@ -11,19 +11,12 @@ using Xunit;
 
 namespace HPA_netcore.Tests
 {
-    public class GraphShould
+    public class ConcreteGraphShould
     {
         [Fact]
         public void InstantiateConcreteGraph()
         {
             var graph = new ConcreteGraph(TileType.Octile);
-            Assert.NotNull(graph);
-        }
-
-        [Fact]
-        public void InstantiateAbstractGraph()
-        {
-            var graph = new AbstractGraph(null);
             Assert.NotNull(graph);
         }
 

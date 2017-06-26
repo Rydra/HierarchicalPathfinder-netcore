@@ -77,7 +77,7 @@ namespace HPASharp.Search
 		}
 	}
 
-	public class AStar<TNode>
+	public class Pathfinder<TNode>
 	{
 		private readonly Func<Id<TNode>, bool> _isGoal;
 		private readonly Func<Id<TNode>, int> _calculateHeuristic;
@@ -85,7 +85,7 @@ namespace HPASharp.Search
 		private readonly SimplePriorityQueue<Id<TNode>> _openQueue;
 		private readonly NodeLookup<TNode> _nodeLookup;
 		
-		public AStar(IGraph<TNode> graph, Id<TNode> startNodeId, Id<TNode> targetNodeId)
+		public Pathfinder(IGraph<TNode> graph, Id<TNode> startNodeId, Id<TNode> targetNodeId)
 		{
 			_isGoal = nodeId => nodeId == targetNodeId;
 			_calculateHeuristic = nodeId => graph.GetHeuristic(nodeId, targetNodeId);
@@ -110,8 +110,8 @@ namespace HPASharp.Search
 
 	 //   public static Path<TNode> FindBidiPath(IGraph<TNode> map, Id<TNode> startNodeId, Id<TNode> targetNodeId)
 		//{
-		//	var search1 = new AStar<TNode>(map, startNodeId, targetNodeId);
-		//	var search2 = new AStar<TNode>(map, targetNodeId, startNodeId);
+		//	var search1 = new Pathfinder<TNode>(map, startNodeId, targetNodeId);
+		//	var search2 = new Pathfinder<TNode>(map, targetNodeId, startNodeId);
 		//	var expand = 0;
 
 		//	while (search1.CanExpand && search2.CanExpand)
@@ -134,7 +134,7 @@ namespace HPASharp.Search
 		//	return new Path<TNode>(new List<Id<TNode>>(), -1);
 		//}
 
-		//private static Path<TNode> ReconstructPath(AStar<TNode> search1, AStar<TNode> search2, Id<TNode> frontier)
+		//private static Path<TNode> ReconstructPath(Pathfinder<TNode> search1, Pathfinder<TNode> search2, Id<TNode> frontier)
 		//{
 		//	var halfPath1 = search1.ReconstructPathFrom(frontier);
 		//	var halfPath2 = search2.ReconstructPathFrom(frontier);

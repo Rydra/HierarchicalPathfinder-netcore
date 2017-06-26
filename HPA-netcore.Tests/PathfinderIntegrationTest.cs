@@ -12,7 +12,7 @@ using Xunit;
 
 namespace HPA_netcore.Tests
 {
-    public class PathfinderShould
+    public class PathfinderIntegrationTest
     {
         [Fact]
         public void CalculatePathsCorrectly()
@@ -356,13 +356,8 @@ namespace HPA_netcore.Tests
 
                 var maxPathsToRefine = int.MaxValue;
                 var hierarchicalSearch = new HierarchicalSearch();
-
-                List<AbstractPathNode> abstractPath = hierarchicalSearch.DoHierarchicalSearch(hierarchicalMap, startAbsNode, targetAbsNode, maxLevel, maxPathsToRefine);
-                var path = hierarchicalSearch.AbstractPathToLowLevelPath(hierarchicalMap, abstractPath, hierarchicalMap.Width, maxPathsToRefine);
-
-                var smoother = new SmoothWizard(_concreteMap, path);
-                path = smoother.SmoothPath();
-
+                List<IPathNode> path = hierarchicalSearch.DoHierarchicalSearch(hierarchicalMap, startAbsNode, targetAbsNode, maxLevel, maxPathsToRefine);
+                
                 factory.RemoveAbstractNode(hierarchicalMap, targetAbsNode);
                 factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
 
