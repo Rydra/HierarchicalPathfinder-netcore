@@ -8,7 +8,7 @@ namespace HPASharp.Graph
     {
         private readonly TileType _tileType;
 
-        public ConcreteGraph(TileType tileType) : base((nodeid, info) => new ConcreteNode(nodeid, info), (nodeid, cost, info) => new ConcreteEdge(nodeid, cost))
+        public ConcreteGraph(TileType tileType) : base(ConcreteNode.CreateNew, (nodeid, cost, info) => ConcreteEdge.CreateNew(nodeid, cost))
         {
             _tileType = tileType;
         }
@@ -81,7 +81,12 @@ namespace HPASharp.Graph
         public ConcreteNodeInfo Info { get; set; }
         public IDictionary<Id<ConcreteNode>, ConcreteEdge> Edges { get; set; }
 
-        public ConcreteNode(Id<ConcreteNode> nodeId, ConcreteNodeInfo info)
+        public static ConcreteNode CreateNew(Id<ConcreteNode> nodeId, ConcreteNodeInfo info)
+        {
+            return new ConcreteNode(nodeId, info);
+        }
+
+        private ConcreteNode(Id<ConcreteNode> nodeId, ConcreteNodeInfo info)
         {
             NodeId = nodeId;
             Info = info;
@@ -105,7 +110,12 @@ namespace HPASharp.Graph
         public ConcreteEdgeInfo Info { get; set; }
         public int Cost { get; set; }
 
-        public ConcreteEdge(Id<ConcreteNode> targetNodeId, int cost)
+        public static ConcreteEdge CreateNew(Id<ConcreteNode> targetNodeId, int cost)
+        {
+            return new ConcreteEdge(targetNodeId, cost);
+        }
+
+        private ConcreteEdge(Id<ConcreteNode> targetNodeId, int cost)
         {
             TargetNodeId = targetNodeId;
             Cost = cost;

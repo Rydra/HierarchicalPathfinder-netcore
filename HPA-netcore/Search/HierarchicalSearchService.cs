@@ -5,24 +5,31 @@ using HPASharp.Smoother;
 
 namespace HPASharp.Search
 {
-    public class HierarchicalSearch
+    public class HierarchicalSearchService
     {
-        public List<IPathNode> DoHierarchicalSearch(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int maxSearchLevel, int maxPathsToRefine = int.MaxValue)
+        private readonly ISmoothService _smoothService;
+        private readonly ISearchService<AbstractNode> _searchService;
+
+        public HierarchicalSearchService(ISmoothService smoothService, ISearchService<AbstractNode> searchService)
         {
-            List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, maxSearchLevel, true);
+            _smoothService = smoothService;
+            _searchService = searchService;
+        }
+
+        public List<IPathNode> FindPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int maxPathsToRefine = int.MaxValue)
+        {
+            List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, map.MaxLevel, true);
 
             if (path.Count == 0)
 				return new List<IPathNode>();
 
-            for (var level = maxSearchLevel; level > 1; level--)
+            for (var level = map.MaxLevel; level > 1; level--)
             {
                 path = RefineAbstractPath(map, path, level, maxPathsToRefine);
             }
 
             List<IPathNode> lowLevelPath = AbstractPathToLowLevelPath(map, path, maxPathsToRefine);
-            
-            var smoother = new SmoothWizard(map.ConcreteMap, lowLevelPath);
-            List<IPathNode> smoothedPath = smoother.SmoothPath();
+            List<IPathNode> smoothedPath = _smoothService.SmoothPath(map.ConcreteMap, lowLevelPath);
 
             return smoothedPath;
         }
@@ -42,8 +49,7 @@ namespace HPASharp.Search
 	        {
                 map.SetAllMapAsCurrentCluster();
 	            map.SetCurrentLevel(level);
-                var search = new Pathfinder<AbstractNode>(map.AbstractGraph, startNodeId, targetNodeId);
-		        path = search.FindPath();
+		        path = _searchService.FindPath(map.AbstractGraph, startNodeId, targetNodeId);
 	        }
 
 	        if (path.PathCost == -1)

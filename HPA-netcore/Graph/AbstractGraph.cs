@@ -8,7 +8,7 @@ namespace HPASharp.Graph
     {
         private readonly HierarchicalMap _map;
 
-        public AbstractGraph(HierarchicalMap map) : base((nodeid, info) => new AbstractNode(nodeid, info), (nodeid, cost, info) => new AbstractEdge(nodeid, cost, info))
+        public AbstractGraph(HierarchicalMap map) : base(AbstractNode.CreateNew, AbstractEdge.CreateNew)
         {
             _map = map;
         }
@@ -38,6 +38,11 @@ namespace HPASharp.Graph
         public AbstractNodeInfo Info { get; set; }
         public IDictionary<Id<AbstractNode>, AbstractEdge> Edges { get; set; }
 
+        public static AbstractNode CreateNew(Id<AbstractNode> nodeId, AbstractNodeInfo info)
+        {
+            return new AbstractNode(nodeId, info);
+        }
+
         public AbstractNode(Id<AbstractNode> nodeId, AbstractNodeInfo info)
         {
             NodeId = nodeId;
@@ -65,6 +70,11 @@ namespace HPASharp.Graph
         public AbstractEdgeInfo Info { get; set; }
         public int Cost { get; set; }
 
+        public static AbstractEdge CreateNew(Id<AbstractNode> targetNodeId, int cost, AbstractEdgeInfo info)
+        {
+            return new AbstractEdge(targetNodeId, cost, info);
+        }
+
         public AbstractEdge(Id<AbstractNode> targetNodeId, int cost, AbstractEdgeInfo info)
         {
             TargetNodeId = targetNodeId;
@@ -77,8 +87,7 @@ namespace HPASharp.Graph
     {
         public List<Id<AbstractNode>> InnerLowerLevelPath { get; set; }
     }
-
-    // implements nodes in the abstract graph
+    
     public class AbstractNodeInfo
     {
         public Id<AbstractNode> Id { get; set; }

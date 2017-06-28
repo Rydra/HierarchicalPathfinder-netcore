@@ -7,9 +7,9 @@ namespace HPA_netcore.Graph
 {
     public class GraphLayers
     {
-        private Dictionary<int, AbstractGraph> _graphLevels;
+        private readonly Dictionary<int, AbstractGraph> _graphLevels;
         private int _currentLevel;
-        private int _maxLevels;
+        private readonly int _maxLevels;
 
         public AbstractGraph AbstractGraph => _graphLevels[_currentLevel];
 

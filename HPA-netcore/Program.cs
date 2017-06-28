@@ -6,6 +6,7 @@ using HPASharp.Graph;
 using HPASharp.Infrastructure;
 using HPASharp.Passabilities;
 using HPASharp.Search;
+using HPASharp.Smoother;
 
 namespace HPASharp
 {
@@ -67,7 +68,7 @@ namespace HPASharp
             var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
 
             Func<Position, Position, List<IPathNode>> doHierarchicalSearch = (startPosition, endPosition)
-                => HierarchicalSearch(absTiling, maxLevel, concreteMap, startPosition, endPosition);
+                => HierarchicalSearch(absTiling, maxLevel, startPosition, endPosition);
 
             Func<Position, Position, List<IPathNode>> doRegularSearch = (startPosition, endPosition)
                 => RegularSearch(concreteMap, startPosition, endPosition);
@@ -127,7 +128,7 @@ namespace HPASharp
             var watch = Stopwatch.StartNew();
 
             watch = Stopwatch.StartNew();
-            var hierarchicalSearchPath = HierarchicalSearch(absTiling, maxLevel, concreteMap, startPosition, endPosition);
+            var hierarchicalSearchPath = HierarchicalSearch(absTiling, maxLevel, startPosition, endPosition);
             long hierarchicalSearchTime = watch.ElapsedMilliseconds;
 
             List<Position> pospath = hierarchicalSearchPath.Select(p =>
@@ -155,14 +156,14 @@ namespace HPASharp
 #endif
         }
 
-        private static List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, int maxLevel, ConcreteMap concreteMap, Position startPosition, Position endPosition)
+        private static List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, int maxLevel, Position startPosition, Position endPosition)
         {
             var factory = new HierarchicalMapFactory();
             var startAbsNode = factory.InsertAbstractNode(hierarchicalMap, startPosition);
             var targetAbsNode = factory.InsertAbstractNode(hierarchicalMap, endPosition);
             var maxPathsToRefine = int.MaxValue;
-            var hierarchicalSearch = new HierarchicalSearch();
-            var path = hierarchicalSearch.DoHierarchicalSearch(hierarchicalMap, startAbsNode, targetAbsNode, maxLevel, maxPathsToRefine);
+            var hierarchicalSearch = new HierarchicalSearchService(new SmoothService(new SearchService<ConcreteNode>()), new SearchService<AbstractNode>());
+            var path = hierarchicalSearch.FindPath(hierarchicalMap, startAbsNode, targetAbsNode, maxPathsToRefine);
 
             factory.RemoveAbstractNode(hierarchicalMap, targetAbsNode);
             factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
@@ -173,12 +174,11 @@ namespace HPASharp
         private static List<IPathNode> RegularSearch(ConcreteMap concreteMap, Position startPosition, Position endPosition)
         {
             var tilingGraph = concreteMap.Graph;
-            Func<int, int, ConcreteNode> getNode =
-                (top, left) => tilingGraph.GetNode(concreteMap.GetNodeIdFromPos(top, left));
+            ConcreteNode GetNode(int top, int left) => tilingGraph.GetNode(concreteMap.GetNodeIdFromPos(top, left));
 
             // Regular pathfinding
-            var searcher = new Pathfinder<ConcreteNode>(concreteMap.Graph, getNode(startPosition.X, startPosition.Y).NodeId, getNode(endPosition.X, endPosition.Y).NodeId);
-            var path = searcher.FindPath();
+            var searcher = new SearchService<ConcreteNode>();
+            var path = searcher.FindPath(concreteMap.Graph, GetNode(startPosition.X, startPosition.Y).NodeId, GetNode(endPosition.X, endPosition.Y).NodeId);
             var path2 = path.PathNodes;
             return new List<IPathNode>(path2.Select(p => (IPathNode)new ConcretePathNode(p)));
         }

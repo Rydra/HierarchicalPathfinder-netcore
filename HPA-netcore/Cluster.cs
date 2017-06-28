@@ -96,8 +96,8 @@ namespace HPASharp
 			
 			var startNodeId = Id<ConcreteNode>.From(GetEntrancePositionIndex(e1));
 			var targetNodeId = Id<ConcreteNode>.From(GetEntrancePositionIndex(e2));
-			var search = new Pathfinder<ConcreteNode>(SubConcreteMap.Graph, startNodeId, targetNodeId);
-			var path = search.FindPath();
+			var search = new SearchService<ConcreteNode>();
+			var path = search.FindPath(SubConcreteMap.Graph, startNodeId, targetNodeId);
 			
 	        if (path.PathCost != -1)
 	        {

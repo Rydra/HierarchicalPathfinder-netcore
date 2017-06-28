@@ -241,8 +241,8 @@ namespace HPASharp
 
         public void AddEdgesBetweenAbstractNodes(Id<AbstractNode> srcAbstractNodeId, Id<AbstractNode> destAbstractNodeId, int level)
         {
-            var search = new Pathfinder<AbstractNode>(GraphLayers.GetSearchLayer(), srcAbstractNodeId, destAbstractNodeId);
-            var path = search.FindPath();
+            var search = new SearchService<AbstractNode>();
+            var path = search.FindPath(GraphLayers.GetSearchLayer(), srcAbstractNodeId, destAbstractNodeId);
             if (path.PathCost >= 0)
             {
                 AddEdge(srcAbstractNodeId, destAbstractNodeId, path.PathCost, new List<Id<AbstractNode>>(path.PathNodes));

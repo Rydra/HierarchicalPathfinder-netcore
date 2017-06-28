@@ -355,8 +355,8 @@ namespace HPA_netcore.Tests
                 Id<AbstractNode> targetAbsNode = factory.InsertAbstractNode(hierarchicalMap, endPosition);
 
                 var maxPathsToRefine = int.MaxValue;
-                var hierarchicalSearch = new HierarchicalSearch();
-                List<IPathNode> path = hierarchicalSearch.DoHierarchicalSearch(hierarchicalMap, startAbsNode, targetAbsNode, maxLevel, maxPathsToRefine);
+                var hierarchicalSearch = new HierarchicalSearchService(new SmoothService(new SearchService<ConcreteNode>()), new SearchService<AbstractNode>());
+                List<IPathNode> path = hierarchicalSearch.FindPath(hierarchicalMap, startAbsNode, targetAbsNode, maxPathsToRefine);
                 
                 factory.RemoveAbstractNode(hierarchicalMap, targetAbsNode);
                 factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
