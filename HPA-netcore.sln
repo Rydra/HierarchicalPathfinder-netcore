@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HPA-netcore", "HPA-netcore\HPA-netcore.csproj", "{86044B0B-C7C9-4FD2-A213-2E0ADFEBCDC6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HPA-netcore", "HPA-netcore\HPA-netcore.csproj", "{86044B0B-C7C9-4FD2-A213-2E0ADFEBCDC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HPA-netcore.Tests", "HPA-netcore.Tests\HPA-netcore.Tests.csproj", "{2A2C526E-073B-4F99-A10E-6A75DAFEC5A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{86044B0B-C7C9-4FD2-A213-2E0ADFEBCDC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86044B0B-C7C9-4FD2-A213-2E0ADFEBCDC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86044B0B-C7C9-4FD2-A213-2E0ADFEBCDC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A2C526E-073B-4F99-A10E-6A75DAFEC5A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A2C526E-073B-4F99-A10E-6A75DAFEC5A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A2C526E-073B-4F99-A10E-6A75DAFEC5A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A2C526E-073B-4F99-A10E-6A75DAFEC5A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

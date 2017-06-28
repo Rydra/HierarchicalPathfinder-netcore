@@ -96,12 +96,12 @@ namespace HPASharp
 			
 			var startNodeId = Id<ConcreteNode>.From(GetEntrancePositionIndex(e1));
 			var targetNodeId = Id<ConcreteNode>.From(GetEntrancePositionIndex(e2));
-			var search = new AStar<ConcreteNode>(SubConcreteMap, startNodeId, targetNodeId);
-			var path = search.FindPath();
+			var search = new SearchService<ConcreteNode>();
+			var path = search.FindPath(SubConcreteMap.Graph, startNodeId, targetNodeId);
 			
 	        if (path.PathCost != -1)
 	        {
-				// Yeah, we are supposing reaching A - B is the same like reaching B - A. Which
+				// TODO: Yeah, we are supposing reaching A - B is the same like reaching B - A. Which
 				// depending on the game this is NOT necessarily true (e.g climbing, downstepping a mountain)
 		        _distances[tuple] = _distances[invtuple] = path.PathCost;
 		        _cachedPaths[tuple] = new List<Id<ConcreteNode>>(path.PathNodes);

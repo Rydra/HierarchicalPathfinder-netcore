@@ -19,10 +19,7 @@ namespace HPASharp
             Level = lvl;
         }
 
-		public int IdValue
-		{
-			get { return Id.IdValue; }
-		}
+		public int IdValue => Id.IdValue;
 	}
 
 	public struct ConcretePathNode : IPathNode
@@ -34,9 +31,6 @@ namespace HPASharp
 			Id = id;
 		}
 
-		public int IdValue
-		{
-			get { return Id.IdValue; }
-		}
+		public int IdValue => Id.IdValue;
 	}
 }

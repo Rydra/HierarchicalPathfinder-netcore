@@ -1,22 +1,15 @@
 ﻿namespace HPASharp.Infrastructure
 {
-	public interface IId
-	{
-	}
-
-	public struct Id<T> : IId
+	public struct Id<T>
 	{
 		public bool Equals(Id<T> other)
 		{
 			return _value == other._value;
 		}
 
-		public int IdValue
-		{
-			get { return _value; }
-		}
+		public int IdValue => _value;
 
-		public override bool Equals(object obj)
+	    public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj)) return false;
 			return obj is Id<T> && Equals((Id<T>) obj);

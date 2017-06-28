@@ -10,17 +10,11 @@ using HPASharp.Smoother;
 
 namespace HPASharp
 {
-	using System.Diagnostics;
+    using System.Diagnostics;
 
-	public class Program
+    public class Program
     {
-		//private static readonly int Height = 16;
-		//private static readonly int Width = 16;
-
-		//private static readonly Position StartPosition = new Position(1, 0);
-		//private static readonly Position EndPosition = new Position(15, 15);
-        
-		public static void Main(string[] args)
+        public static void Main2(string[] args)
         {
             const int clusterSize = 8;
             const int maxLevel = 2;
@@ -30,64 +24,23 @@ namespace HPASharp
             Position startPosition = new Position(1, 0);
             Position endPosition = new Position(69, 69);
 
-            // Prepare the abstract graph beforehand
-            IPassability passability = new FakePassability(width, height);
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
-            var abstractMapFactory = new HierarchicalMapFactory();
-			var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
-            //var edges = absTiling.AbstractGraph.Nodes.SelectMany(x => x.Edges.Values)
-            //    .GroupBy(x => x.Info.Level)
-            //    .ToDictionary(x => x.Key, x => x.Count());
+            Execute(width, height, maxLevel, clusterSize, startPosition, endPosition);
+        }
+        
+        public static void Main(string[] args)
+        {
+            const int clusterSize = 10;
+            const int maxLevel = 2;
+            const int height = 40;
+            const int width = 40;
 
-            var watch = Stopwatch.StartNew();
-            var regularSearchPath = RegularSearch(concreteMap, startPosition, endPosition);
-	        var regularSearchTime = watch.ElapsedMilliseconds;
+            Position startPosition = new Position(18, 0);
+            Position endPosition = new Position(20, 0);
 
-            watch = Stopwatch.StartNew();
-            var hierarchicalSearchPath = HierarchicalSearch(absTiling, maxLevel, concreteMap, startPosition, endPosition);
-            var hierarchicalSearchTime = watch.ElapsedMilliseconds;
+            Execute(width, height, maxLevel, clusterSize, startPosition, endPosition, true);
+        }
 
-			var pospath = hierarchicalSearchPath.Select(p =>
-			{
-				if (p is ConcretePathNode)
-				{
-					var concretePathNode = (ConcretePathNode)p;
-					return concreteMap.Graph.GetNodeInfo(concretePathNode.Id).Position;
-				}
-
-				var abstractPathNode = (AbstractPathNode)p;
-				return absTiling.AbstractGraph.GetNodeInfo(abstractPathNode.Id).Position;
-			}).ToList();
-
-#if !DEBUG
-            Console.WriteLine("Regular search: " + regularSearchTime + " ms");
-            Console.WriteLine("Number of nodes: " + regularSearchPath.Count);
-
-            Console.WriteLine("Hierachical search: " + hierarchicalSearchTime + " ms");
-            Console.WriteLine("Number of nodes: " + hierarchicalSearchPath.Count);
-#endif
-
-#if DEBUG
-			//Console.WriteLine("Regular search: " + regularSearchTime + " ms");
-			//Console.WriteLine($"{regularSearchPath.Count} path nodes");
-			//PrintFormatted(concreteMap, absTiling, clusterSize, regularSearchPath);
-			//Console.WriteLine();
-   //         Console.WriteLine();
-   //         Console.WriteLine();
-			Console.WriteLine("Hierachical search: " + hierarchicalSearchTime + " ms");
-			Console.WriteLine($"{hierarchicalSearchPath.Count} path nodes");
-			PrintFormatted(concreteMap, absTiling, clusterSize, pospath);
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
-
-			Console.WriteLine("Press any key to quit...");
-			Console.ReadKey();
-#endif
-
-		}
-
-		public static void Main2(string[] args)
+        public static void Main10(string[] args)
         {
             const int clusterSize = 8;
             const int maxLevel = 2;
@@ -97,58 +50,7 @@ namespace HPASharp
             Position startPosition = new Position(17, 38);
             Position endPosition = new Position(16, 18);
 
-            // Prepare the abstract graph beforehand
-            IPassability passability = new FakePassability(width, height);
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
-            var abstractMapFactory = new HierarchicalMapFactory();
-            var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
-
-            var watch = Stopwatch.StartNew();
-            var regularSearchPath = RegularSearch(concreteMap, startPosition, endPosition);
-            var regularSearchTime = watch.ElapsedMilliseconds;
-
-            watch = Stopwatch.StartNew();
-            var hierarchicalSearchPath = HierarchicalSearch(absTiling, maxLevel, concreteMap, startPosition, endPosition);
-            var hierarchicalSearchTime = watch.ElapsedMilliseconds;
-
-            var pospath = hierarchicalSearchPath.Select(p =>
-            {
-                if (p is ConcretePathNode)
-                {
-                    var concretePathNode = (ConcretePathNode)p;
-                    return concreteMap.Graph.GetNodeInfo(concretePathNode.Id).Position;
-                }
-
-                var abstractPathNode = (AbstractPathNode)p;
-                return absTiling.AbstractGraph.GetNodeInfo(abstractPathNode.Id).Position;
-            }).ToList();
-
-#if !DEBUG
-            Console.WriteLine("Regular search: " + regularSearchTime + " ms");
-            Console.WriteLine("Number of nodes: " + regularSearchPath.Count);
-
-            Console.WriteLine("Hierachical search: " + hierarchicalSearchTime + " ms");
-            Console.WriteLine("Number of nodes: " + hierarchicalSearchPath.Count);
-#endif
-
-#if DEBUG
-            //Console.WriteLine("Regular search: " + regularSearchTime + " ms");
-            //Console.WriteLine($"{regularSearchPath.Count} path nodes");
-            //PrintFormatted(concreteMap, absTiling, clusterSize, regularSearchPath);
-            //Console.WriteLine();
-            //Console.WriteLine();
-            //Console.WriteLine();
-            Console.WriteLine("Hierachical search: " + hierarchicalSearchTime + " ms");
-            Console.WriteLine($"{hierarchicalSearchPath.Count} path nodes");
-            PrintFormatted(concreteMap, absTiling, clusterSize, pospath);
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
-
-            Console.WriteLine("Press any key to quit...");
-            Console.ReadKey();
-#endif
-
+            Execute(width, height, maxLevel, clusterSize, startPosition, endPosition, true);
         }
 
         public static void Main7(string[] args)
@@ -157,21 +59,16 @@ namespace HPASharp
             const int maxLevel = 2;
             const int height = 128;
             const int width = 128;
-
-            //IPassability passability = new ExamplePassability();
-
+            
             IPassability passability = new FakePassability(width, height);
 
-            var concreteMap = ConcreteMapFactory.CreateConcreteMap(width, height, passability);
+            var concreteMap = ConcreteMap.Create(width, height, passability);
 
             var abstractMapFactory = new HierarchicalMapFactory();
-			var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
-            //var edges = absTiling.AbstractGraph.Nodes.SelectMany(x => x.Edges.Values)
-            //    .GroupBy(x => x.Info.Level)
-            //    .ToDictionary(x => x.Key, x => x.Count());
+            var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
 
             Func<Position, Position, List<IPathNode>> doHierarchicalSearch = (startPosition, endPosition)
-                => HierarchicalSearch(absTiling, maxLevel, concreteMap, startPosition, endPosition);
+                => HierarchicalSearch(absTiling, maxLevel, startPosition, endPosition);
 
             Func<Position, Position, List<IPathNode>> doRegularSearch = (startPosition, endPosition)
                 => RegularSearch(concreteMap, startPosition, endPosition);
@@ -181,30 +78,27 @@ namespace HPASharp
                 {
                     if (p is ConcretePathNode)
                     {
-                        var concretePathNode = (ConcretePathNode) p;
+                        var concretePathNode = (ConcretePathNode)p;
                         return concreteMap.Graph.GetNodeInfo(concretePathNode.Id).Position;
                     }
 
-                    var abstractPathNode = (AbstractPathNode) p;
+                    var abstractPathNode = (AbstractPathNode)p;
                     return absTiling.AbstractGraph.GetNodeInfo(abstractPathNode.Id).Position;
                 }).ToList();
-
-            //Position startPosition2 = new Position(18, 0);
-            //Position endPosition2 = new Position(20, 0);
-
+            
             var points = Enumerable.Range(0, 2000).Select(_ =>
             {
-                var pos1 = ((FakePassability) passability).GetRandomFreePosition();
-                var pos2 = ((FakePassability) passability).GetRandomFreePosition();
+                var pos1 = ((FakePassability)passability).GetRandomFreePosition();
+                var pos2 = ((FakePassability)passability).GetRandomFreePosition();
                 while (Math.Abs(pos1.X - pos2.X) + Math.Abs(pos1.Y - pos2.Y) < 10)
                 {
-                    pos2 = ((FakePassability) passability).GetRandomFreePosition();
+                    pos2 = ((FakePassability)passability).GetRandomFreePosition();
                 }
 
                 return Tuple.Create(pos1, pos2);
             }).ToArray();
-            
-            var searchStrategies = new[] {doRegularSearch, doHierarchicalSearch};
+
+            var searchStrategies = new[] { doRegularSearch, doHierarchicalSearch };
 
             foreach (var searchStrategy in searchStrategies)
             {
@@ -222,39 +116,74 @@ namespace HPASharp
             }
         }
 
-        private static List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, int maxLevel, ConcreteMap concreteMap, Position startPosition, Position endPosition)
-	    {
-			var factory = new HierarchicalMapFactory();
-			var startAbsNode = factory.InsertAbstractNode(hierarchicalMap, startPosition);
-	        var targetAbsNode = factory.InsertAbstractNode(hierarchicalMap, endPosition);
-	        var maxPathsToRefine = int.MaxValue;
-            var hierarchicalSearch = new HierarchicalSearch();
-            var abstractPath = hierarchicalSearch.DoHierarchicalSearch(hierarchicalMap, startAbsNode, targetAbsNode, maxLevel, maxPathsToRefine);
-			var path = hierarchicalSearch.AbstractPathToLowLevelPath(hierarchicalMap, abstractPath, hierarchicalMap.Width, maxPathsToRefine);
 
-            var smoother = new SmoothWizard(concreteMap, path);
-            path = smoother.SmoothPath();
+        public static void Execute(int width, int height, int maxLevel, int clusterSize, Position startPosition, Position endPosition, bool sample = false)
+        {
+            // Prepare the abstract graph beforehand
+            IPassability passability = sample ? new ExamplePassability() : (IPassability)new FakePassability(width, height);
+            var concreteMap = ConcreteMap.Create(width, height, passability);
+            var abstractMapFactory = new HierarchicalMapFactory();
+            var absTiling = abstractMapFactory.CreateHierarchicalMap(concreteMap, clusterSize, maxLevel, EntranceStyle.EndEntrance);
+
+            var watch = Stopwatch.StartNew();
+
+            watch = Stopwatch.StartNew();
+            var hierarchicalSearchPath = HierarchicalSearch(absTiling, maxLevel, startPosition, endPosition);
+            long hierarchicalSearchTime = watch.ElapsedMilliseconds;
+
+            List<Position> pospath = hierarchicalSearchPath.Select(p =>
+            {
+                if (p is ConcretePathNode)
+                {
+                    var concretePathNode = (ConcretePathNode)p;
+                    return concreteMap.Graph.GetNodeInfo(concretePathNode.Id).Position;
+                }
+
+                var abstractPathNode = (AbstractPathNode)p;
+                return absTiling.AbstractGraph.GetNodeInfo(abstractPathNode.Id).Position;
+            }).ToList();
+
+#if DEBUG
+            Console.WriteLine("Hierachical search: " + hierarchicalSearchTime + " ms");
+            Console.WriteLine($"{hierarchicalSearchPath.Count} path nodes");
+            PrintFormatted(concreteMap, absTiling, clusterSize, pospath);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine();
+
+            Console.WriteLine("Press any key to quit...");
+            Console.ReadKey();
+#endif
+        }
+
+        private static List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, int maxLevel, Position startPosition, Position endPosition)
+        {
+            var factory = new HierarchicalMapFactory();
+            var startAbsNode = factory.InsertAbstractNode(hierarchicalMap, startPosition);
+            var targetAbsNode = factory.InsertAbstractNode(hierarchicalMap, endPosition);
+            var maxPathsToRefine = int.MaxValue;
+            var hierarchicalSearch = new HierarchicalSearchService(new SmoothService(new SearchService<ConcreteNode>()), new SearchService<AbstractNode>());
+            var path = hierarchicalSearch.FindPath(hierarchicalMap, startAbsNode, targetAbsNode, maxPathsToRefine);
 
             factory.RemoveAbstractNode(hierarchicalMap, targetAbsNode);
-			factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
+            factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
 
-			return path;
-	    }
+            return path;
+        }
 
-	    private static List<IPathNode> RegularSearch(ConcreteMap concreteMap, Position startPosition, Position endPosition)
-	    {
-			var tilingGraph = concreteMap.Graph;
-			Func<int, int, ConcreteNode> getNode =
-				(top, left) => tilingGraph.GetNode(concreteMap.GetNodeIdFromPos(top, left));
+        private static List<IPathNode> RegularSearch(ConcreteMap concreteMap, Position startPosition, Position endPosition)
+        {
+            var tilingGraph = concreteMap.Graph;
+            ConcreteNode GetNode(int top, int left) => tilingGraph.GetNode(concreteMap.GetNodeIdFromPos(top, left));
 
-			// Regular pathfinding
-			var searcher = new AStar<ConcreteNode>(concreteMap, getNode(startPosition.X, startPosition.Y).NodeId, getNode(endPosition.X, endPosition.Y).NodeId);
-			var path = searcher.FindPath();
-	        var path2 = path.PathNodes;
-	        return new List<IPathNode>(path2.Select(p => (IPathNode)new ConcretePathNode(p)));
-	    }
+            // Regular pathfinding
+            var searcher = new SearchService<ConcreteNode>();
+            var path = searcher.FindPath(concreteMap.Graph, GetNode(startPosition.X, startPosition.Y).NodeId, GetNode(endPosition.X, endPosition.Y).NodeId);
+            var path2 = path.PathNodes;
+            return new List<IPathNode>(path2.Select(p => (IPathNode)new ConcretePathNode(p)));
+        }
 
-	    private static List<char> GetCharVector(ConcreteMap concreteMap)
+        private static List<char> GetCharVector(ConcreteMap concreteMap)
         {
             var result = new List<char>();
             var numberNodes = concreteMap.NrNodes;
@@ -271,8 +200,9 @@ namespace HPASharp
             PrintFormatted(GetCharVector(concreteMap), concreteMap, hierarchicalGraph, clusterSize, path);
         }
 
-        private static void PrintFormatted(List<char> chars, ConcreteMap concreteMap, HierarchicalMap hierarchicalGraph, int clusterSize, List<Position> path)
+        private static void PrintFormatted(List<char> chars, ConcreteMap concreteMap, HierarchicalMap hierarchicalMap, int clusterSize, List<Position> path)
         {
+            hierarchicalMap.SetCurrentLevel(1);
             for (var y = 0; y < concreteMap.Height; y++)
             {
                 if (y % clusterSize == 0) Console.WriteLine("---------------------------------------------------------");
@@ -282,17 +212,20 @@ namespace HPASharp
                     if (x % clusterSize == 0) Console.Write('|');
 
                     var nodeId = concreteMap.GetNodeIdFromPos(x, y);
-                    var hasAbsNode = hierarchicalGraph.AbstractGraph.Nodes.SingleOrDefault(n => n.Info.ConcreteNodeId == nodeId);
                     
+                    var hasAbsNode = hierarchicalMap.AbstractGraph.Nodes.Values.SingleOrDefault(n => n.Info.ConcreteNodeId == nodeId);
+
                     if (hasAbsNode != null)
                         switch (hasAbsNode.Info.Level)
                         {
-                            case 1: Console.ForegroundColor = ConsoleColor.Red;
+                            case 1:
+                                Console.ForegroundColor = ConsoleColor.Red;
                                 break;
-                            case 2: Console.ForegroundColor = ConsoleColor.DarkGreen;
+                            case 2:
+                                Console.ForegroundColor = ConsoleColor.DarkGreen;
                                 break;
                         }
-                        
+
                     Console.Write(path.Any(node => node.X == x && node.Y == y) ? 'X' : chars[nodeId.IdValue]);
                 }
 

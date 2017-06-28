@@ -1,43 +1,55 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using HPASharp.Graph;
 using HPASharp.Infrastructure;
+using HPASharp.Smoother;
 
 namespace HPASharp.Search
 {
-    public class HierarchicalSearch
+    public class HierarchicalSearchService
     {
-        public List<AbstractPathNode> DoHierarchicalSearch(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int maxSearchLevel, int maxPathsToRefine = int.MaxValue)
+        private readonly ISmoothService _smoothService;
+        private readonly ISearchService<AbstractNode> _searchService;
+
+        public HierarchicalSearchService(ISmoothService smoothService, ISearchService<AbstractNode> searchService)
         {
-	        List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, maxSearchLevel, true);
+            _smoothService = smoothService;
+            _searchService = searchService;
+        }
+
+        public List<IPathNode> FindPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int maxPathsToRefine = int.MaxValue)
+        {
+            List<AbstractPathNode> path = GetPath(map, startNodeId, targetNodeId, map.MaxLevel, true);
 
             if (path.Count == 0)
-				return path;
+				return new List<IPathNode>();
 
-            for (var level = maxSearchLevel; level > 1; level--)
+            for (var level = map.MaxLevel; level > 1; level--)
+            {
                 path = RefineAbstractPath(map, path, level, maxPathsToRefine);
+            }
 
-            return path;
+            List<IPathNode> lowLevelPath = AbstractPathToLowLevelPath(map, path, maxPathsToRefine);
+            List<IPathNode> smoothedPath = _smoothService.SmoothPath(map.ConcreteMap, lowLevelPath);
+
+            return smoothedPath;
         }
 
         private List<AbstractPathNode> GetPath(HierarchicalMap map, Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId, int level, bool mainSearch)
         {
-            map.SetCurrentLevelForSearches(level);
-            var nodeInfo = map.AbstractGraph.GetNodeInfo(startNodeId);
-
             // TODO: This could be perfectly replaced by cached paths in the clusters!
-	        Path<AbstractNode> path;
+            Path<AbstractNode> path;
 	        if (!mainSearch)
 	        {
-                map.SetCurrentClusterByPositionAndLevel(nodeInfo.Position, level + 1);
-                var edgeInfo = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId].Info;
-				path = new Path<AbstractNode>(edgeInfo.InnerLowerLevelPath, edgeInfo.Cost);
+                // We need to search to a higher level edge
+	            map.SetCurrentLevel(level + 1);
+                var edge = map.AbstractGraph.GetEdges(startNodeId)[targetNodeId];
+				path = new Path<AbstractNode>(edge.Info.InnerLowerLevelPath, edge.Cost);
 			}
 	        else
 	        {
                 map.SetAllMapAsCurrentCluster();
-		        var search = new AStar<AbstractNode>(map, startNodeId, targetNodeId);
-		        path = search.FindPath();
+	            map.SetCurrentLevel(level);
+		        path = _searchService.FindPath(map.AbstractGraph, startNodeId, targetNodeId);
 	        }
 
 	        if (path.PathCost == -1)
@@ -46,7 +58,7 @@ namespace HPASharp.Search
             }
 
             var result = new List<AbstractPathNode>(path.PathNodes.Count);
-            foreach (Id<AbstractNode> abstractNodeId in path.PathNodes)
+            foreach (var abstractNodeId in path.PathNodes)
             {
                 result.Add(new AbstractPathNode(abstractNodeId, level));
             }
@@ -56,6 +68,9 @@ namespace HPASharp.Search
         
         public List<AbstractPathNode> RefineAbstractPath(HierarchicalMap map, List<AbstractPathNode> path, int level, int maxPathsToRefine = int.MaxValue)
         {
+            // We are refining to a lower level
+            map.SetCurrentLevel(level - 1);
+
             var refinedAbstractPath = new List<AbstractPathNode>();
             var calculatedPaths = 0;
 
@@ -83,9 +98,10 @@ namespace HPASharp.Search
             return refinedAbstractPath;
         }
 
-        public List<IPathNode> AbstractPathToLowLevelPath(HierarchicalMap map, List<AbstractPathNode> abstractPath, int mapWidth, int maxPathsToCalculate = int.MaxValue)
+        public List<IPathNode> AbstractPathToLowLevelPath(HierarchicalMap map, List<AbstractPathNode> abstractPath, int maxPathsToCalculate = int.MaxValue)
         {
             var result = new List<IPathNode>();
+            map.SetCurrentLevel(1);
             if (abstractPath.Count == 0)
 				return result;
 
@@ -133,7 +149,7 @@ namespace HPASharp.Search
 	                var concretePath = new List<IPathNode>();
 	                for (int i = 1; i < localPath.Count; i++)
 	                {
-						int concreteNodeId = LocalNodeId2ConcreteNodeId(localPath[i].IdValue, cluster, mapWidth);
+						int concreteNodeId = LocalNodeId2ConcreteNodeId(localPath[i].IdValue, cluster, map.Width);
 						concretePath.Add(new ConcretePathNode(Id<ConcreteNode>.From(concreteNodeId)));
 					}
 
@@ -167,14 +183,6 @@ namespace HPASharp.Search
             var result = (localY + cluster.Origin.Y) * width +
                          (localX + cluster.Origin.X);
             return result;
-        }
-
-        private static int GlobalId2LocalId(int globalId, Cluster cluster, int width)
-        {
-            var globalY = globalId / width;
-            var globalX = globalId % width;
-            return (globalY - cluster.Origin.Y) * cluster.Size.Width +
-                (globalX - cluster.Origin.X);
         }
     }
 }

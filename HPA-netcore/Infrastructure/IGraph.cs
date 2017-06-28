@@ -3,10 +3,8 @@
 namespace HPASharp.Infrastructure
 {
     /** Interface to search environment. */
-    public interface IMap<TNode>
+    public interface IGraph<TNode>
     {
-        int NrNodes { get; }
-        
         /** Generate successor nodes for the search.
             @param lastNodeId
             Can be used to prune nodes,

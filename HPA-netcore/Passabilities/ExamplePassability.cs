@@ -6,7 +6,7 @@ namespace HPASharp
 {
     public class ExamplePassability : IPassability
     {
-        private string map = @"
+        private static string map = @"
                 0000000000000000000100000000000000000000
                 0111111111111111111111111111111111111110
                 0000000000000000000100000000000000000000
@@ -49,18 +49,22 @@ namespace HPASharp
                 0000000000000000000000000000000000000000
             ";
 
-        public ExamplePassability()
+        public ExamplePassability() : this(map, 40, 40)
         {
-            obstacles = new bool[40, 40];
+        }
+
+        public ExamplePassability(string map, int width, int height)
+        {
+            obstacles = new bool[width, height];
             var charlines = map.Split('\n')
                 .Select(line => line.Trim())
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .Select(line => line.ToCharArray()).ToArray();
-            for(int j = 0; j < obstacles.GetLength(1); j++)
-                for (int i = 0; i < obstacles.GetLength(0); i++)
-                {
-                    obstacles[i, j] = charlines[i][j] == '1';
-                }
+            for (int j = 0; j < obstacles.GetLength(1); j++)
+            for (int i = 0; i < obstacles.GetLength(0); i++)
+            {
+                obstacles[i, j] = charlines[i][j] == '1';
+            }
         }
 
         Random rnd = new Random(700);

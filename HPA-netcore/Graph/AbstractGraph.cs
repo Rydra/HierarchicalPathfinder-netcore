@@ -1,15 +1,44 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using HPASharp.Infrastructure;
+using HPA_netcore.Search;
 
 namespace HPASharp.Graph
 {
+    public class AbstractGraph : Graph<AbstractNode, AbstractNodeInfo, AbstractEdge, AbstractEdgeInfo>
+    {
+        private readonly HierarchicalMap _map;
 
+        public AbstractGraph(HierarchicalMap map) : base(AbstractNode.CreateNew, AbstractEdge.CreateNew)
+        {
+            _map = map;
+        }
+
+        public override int GetHeuristic(Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId)
+        {
+            Position startPos = GetNodeInfo(startNodeId).Position;
+            Position targetPos = GetNodeInfo(targetNodeId).Position;
+
+            return Heuristics.ManhattanDistance(startPos, targetPos);
+        }
+
+        protected override bool IsValid(AbstractEdge edge)
+        {
+            var targetNode = GetNode(edge.TargetNodeId);
+            return _map.PositionInCurrentCluster(targetNode.Info.Position);
+        }
+    }
+    
     public class AbstractNode : INode<AbstractNode, AbstractNodeInfo, AbstractEdge>
     {
         public Id<AbstractNode> NodeId { get; set; }
         public AbstractNodeInfo Info { get; set; }
         public IDictionary<Id<AbstractNode>, AbstractEdge> Edges { get; set; }
+
+        public static AbstractNode CreateNew(Id<AbstractNode> nodeId, AbstractNodeInfo info)
+        {
+            return new AbstractNode(nodeId, info);
+        }
 
         public AbstractNode(Id<AbstractNode> nodeId, AbstractNodeInfo info)
         {
@@ -23,53 +52,39 @@ namespace HPASharp.Graph
             Edges.Remove(targetNodeId);
         }
 
-	    public void AddEdge(AbstractEdge edge)
-	    {
-		    if (!Edges.ContainsKey(edge.TargetNodeId) || Edges[edge.TargetNodeId].Info.Level < edge.Info.Level)
-		    {
-			    Edges[edge.TargetNodeId] = edge;
-			}
-	    }
+        public void AddEdge(AbstractEdge edge)
+        {
+            if (!Edges.ContainsKey(edge.TargetNodeId))
+            {
+                Edges[edge.TargetNodeId] = edge;
+            }
+        }
     }
 
     public class AbstractEdge : IEdge<AbstractNode, AbstractEdgeInfo>
     {
         public Id<AbstractNode> TargetNodeId { get; set; }
         public AbstractEdgeInfo Info { get; set; }
+        public int Cost { get; set; }
 
-        public AbstractEdge(Id<AbstractNode> targetNodeId, AbstractEdgeInfo info)
+        public static AbstractEdge CreateNew(Id<AbstractNode> targetNodeId, int cost, AbstractEdgeInfo info)
+        {
+            return new AbstractEdge(targetNodeId, cost, info);
+        }
+
+        public AbstractEdge(Id<AbstractNode> targetNodeId, int cost, AbstractEdgeInfo info)
         {
             TargetNodeId = targetNodeId;
             Info = info;
+            Cost = cost;
         }
     }
-    
+
     public class AbstractEdgeInfo
     {
-        public int Cost { get; set; }
-        public int Level { get; set; }
-        public bool IsInterClusterEdge { get; set; }
-		public List<Id<AbstractNode>> InnerLowerLevelPath { get; set; }
-
-        public AbstractEdgeInfo(int cost, int level = 1, bool interCluster = true)
-        {
-            Cost = cost;
-            Level = level;
-            IsInterClusterEdge = interCluster;
-        }
-
-        public override string ToString()
-        {
-            return ("cost: " + Cost + "; level: " + Level + "; interCluster: " + IsInterClusterEdge);
-        }
-
-        public void PrintInfo()
-        {
-            Console.WriteLine(this.ToString());
-        }
+        public List<Id<AbstractNode>> InnerLowerLevelPath { get; set; }
     }
-
-    // implements nodes in the abstract graph
+    
     public class AbstractNodeInfo
     {
         public Id<AbstractNode> Id { get; set; }
@@ -79,7 +94,7 @@ namespace HPASharp.Graph
         public int Level { get; set; }
 
         public AbstractNodeInfo(Id<AbstractNode> id, int level, Id<Cluster> clId,
-                    Position position, Id<ConcreteNode> concreteNodeId)
+            Position position, Id<ConcreteNode> concreteNodeId)
         {
             Id = id;
             Level = level;

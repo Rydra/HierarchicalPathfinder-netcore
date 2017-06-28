@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HPASharp
+﻿namespace HPASharp
 {
     public static class Helpers
     {
