@@ -75,7 +75,6 @@ namespace HPASharp.Graph
 	            {
 	                result.Add(new Connection<TNode>(edge.TargetNodeId, edge.Cost));
                 }
-	                
 	        }
 
 	        return result;

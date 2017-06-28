@@ -6,18 +6,6 @@ using HPASharp.Search;
 
 namespace HPASharp.Smoother
 {
-    public enum Direction
-    {
-        North,
-        East,
-        South,
-        West,
-        NorthEast,
-        SouthEast,
-        SouthWest,
-        NorthWest
-    }
-
     public class SmoothService : ISmoothService
     {
         private readonly ISearchService<ConcreteNode> _searchService;

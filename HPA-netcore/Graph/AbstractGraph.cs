@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using HPASharp.Infrastructure;
+using HPA_netcore.Search;
 
 namespace HPASharp.Graph
 {
@@ -15,14 +16,10 @@ namespace HPASharp.Graph
 
         public override int GetHeuristic(Id<AbstractNode> startNodeId, Id<AbstractNode> targetNodeId)
         {
-            var startPos = GetNodeInfo(startNodeId).Position;
-            var targetPos = GetNodeInfo(targetNodeId).Position;
-            var diffY = Math.Abs(startPos.Y - targetPos.Y);
-            var diffX = Math.Abs(startPos.X - targetPos.X);
+            Position startPos = GetNodeInfo(startNodeId).Position;
+            Position targetPos = GetNodeInfo(targetNodeId).Position;
 
-            // Manhattan distance, after testing a bit for hierarchical searches we do not need
-            // the level of precision of Diagonal distance or euclidean distance
-            return (diffY + diffX) * Constants.COST_ONE;
+            return Heuristics.ManhattanDistance(startPos, targetPos);
         }
 
         protected override bool IsValid(AbstractEdge edge)
