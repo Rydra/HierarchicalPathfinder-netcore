@@ -325,7 +325,7 @@ namespace HPA_netcore.Tests
             }
 
             public ScenarioMaker WhenCalculatingThePathBetweenTwoPoints(Position start, Position end) {
-                _pathNodes = HierarchicalSearch(_abstractMap, _abstractMap.MaxLevel, start, end);
+                _pathNodes = HierarchicalSearch(_abstractMap, start, end);
                 return this;
             }
 
@@ -348,18 +348,17 @@ namespace HPA_netcore.Tests
                 return this;
             }
 
-            private List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, int maxLevel, Position startPosition, Position endPosition)
+            private List<IPathNode> HierarchicalSearch(HierarchicalMap hierarchicalMap, Position startPosition, Position endPosition)
             {
-                var factory = new HierarchicalMapFactory();
-                Id<AbstractNode> startAbsNode = factory.InsertAbstractNode(hierarchicalMap, startPosition);
-                Id<AbstractNode> targetAbsNode = factory.InsertAbstractNode(hierarchicalMap, endPosition);
+                Id<AbstractNode> startAbsNode = hierarchicalMap.AddAbstractNode(startPosition);
+                Id<AbstractNode> targetAbsNode = hierarchicalMap.AddAbstractNode(endPosition);
 
                 var maxPathsToRefine = int.MaxValue;
                 var hierarchicalSearch = new HierarchicalSearchService(new SmoothService(new SearchService<ConcreteNode>()), new SearchService<AbstractNode>());
                 List<IPathNode> path = hierarchicalSearch.FindPath(hierarchicalMap, startAbsNode, targetAbsNode, maxPathsToRefine);
-                
-                factory.RemoveAbstractNode(hierarchicalMap, targetAbsNode);
-                factory.RemoveAbstractNode(hierarchicalMap, startAbsNode);
+
+                hierarchicalMap.RemoveNode(targetAbsNode);
+                hierarchicalMap.RemoveNode(startAbsNode);
 
                 return path;
             }

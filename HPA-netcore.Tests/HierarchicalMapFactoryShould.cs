@@ -106,7 +106,7 @@ namespace HPA_netcore.Tests
 
             public ScenarioMaker GivenANewNodeAddedToThePosition(Position position)
             {
-                _createdNodes.Add(_abstractMapFactory.InsertAbstractNode(_abstractMap, position));
+                _createdNodes.Add(_abstractMap.AddAbstractNode(position));
 
                 return this;
             }
@@ -127,7 +127,7 @@ namespace HPA_netcore.Tests
             {
                 foreach (var createdNode in _createdNodes)
                 {
-                    _abstractMapFactory.RemoveAbstractNode(_abstractMap, createdNode);
+                    _abstractMap.RemoveNode(createdNode);
                 }
 
                 return this;

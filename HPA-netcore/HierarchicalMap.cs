@@ -8,28 +8,6 @@ using HPA_netcore.Graph;
 
 namespace HPASharp
 {
-    #region Abstract ConcreteMap support classes
-
-    public struct Connection<TNode>
-    {
-        public Id<TNode> Target;
-        public int Cost;
-
-        public Connection(Id<TNode> target, int cost)
-        {
-            Target = target;
-            Cost = cost;
-        }
-    }
-
-    public enum AbsType {
-        ABSTRACT_TILE,
-        ABSTRACT_OCTILE,
-        ABSTRACT_OCTILE_UNICOST
-    }
-
-    #endregion
-
     /// <summary>
     /// Abstract maps represent, as the name implies, an abstraction
     /// built over the concrete map.
@@ -53,7 +31,7 @@ namespace HPASharp
         // array for quick access. For saving memory space, this could be implemented as a dictionary
         // NOTE: It is currently just used for insert and remove STAL
         public Dictionary<Id<ConcreteNode>, Id<AbstractNode>> ConcreteNodeIdToAbstractNodeIdMap { get; set; }
-        public AbsType Type { get; set; }
+        public AbstractType Type { get; set; }
         public ConcreteMap ConcreteMap { get; set; }
 		
 		private int currentClusterY0;
@@ -69,13 +47,13 @@ namespace HPASharp
             switch(tileType)
             {
                 case TileType.Tile:
-                    Type = AbsType.ABSTRACT_TILE;
+                    Type = AbstractType.ABSTRACT_TILE;
                     break;
                 case TileType.Octile:
-                    Type = AbsType.ABSTRACT_OCTILE;
+                    Type = AbstractType.ABSTRACT_OCTILE;
                     break;
                 case TileType.OctileUnicost:
-                    Type = AbsType.ABSTRACT_OCTILE_UNICOST;
+                    Type = AbstractType.ABSTRACT_OCTILE_UNICOST;
                     break;
             }
         }
@@ -132,7 +110,7 @@ namespace HPASharp
             return Clusters[id.IdValue];
         }
 		
-	    public void RemoveAbstractNode(Id<AbstractNode> abstractNodeId)
+	    private void RemoveAbstractNode(Id<AbstractNode> abstractNodeId)
 	    {
 	        AbstractNodeInfo abstractNodeInfo = AbstractGraph.GetNodeInfo(abstractNodeId);
             Cluster cluster = Clusters[abstractNodeInfo.ClusterId.IdValue];
@@ -145,6 +123,155 @@ namespace HPASharp
 	            AbstractGraph.Remove(abstractNodeId);
 	        }
 	    }
+
+        public Id<AbstractNode> AddAbstractNode(Position pos)
+        {
+            var nodeId = Id<ConcreteNode>.From(pos.Y * Width + pos.X);
+
+            SetCurrentLevel(1);
+            Id<AbstractNode> abstractNodeId = InsertNodeIntoHierarchicalMap(nodeId, pos);
+            AddHierarchicalEdgesForAbstractNode(abstractNodeId);
+            return abstractNodeId;
+        }
+
+        public void RemoveNode(Id<AbstractNode> nodeId)
+        {
+            if (nodeBackups.ContainsKey(nodeId))
+            {
+                RestoreNodeBackup(nodeId);
+            }
+            else
+            {
+                for (int i = 1; i <= MaxLevel; i++)
+                {
+                    SetCurrentLevel(i);
+                    RemoveAbstractNode(nodeId);
+                }
+            }
+        }
+        
+        private void RestoreNodeBackup(Id<AbstractNode> nodeId)
+        {
+            var nodeBackupList = nodeBackups[nodeId];
+            int maxLevel = nodeBackupList.Max(x => x.Level);
+
+            foreach (var nodeBackup in nodeBackupList)
+            {
+                var level = nodeBackup.Level;
+                SetCurrentLevel(level);
+
+                var nodeInfo = AbstractGraph.GetNodeInfo(nodeId);
+                AbstractGraph.RemoveEdgesFromAndToNode(nodeId);
+                AbstractGraph.AddNode(nodeId, nodeInfo);
+                foreach (var edge in nodeBackup.Edges)
+                {
+                    var targetNodeId = edge.TargetNodeId;
+
+                    AddEdge(nodeId, targetNodeId, edge.Cost, edge.Info.InnerLowerLevelPath != null
+                        ? new List<Id<AbstractNode>>(edge.Info.InnerLowerLevelPath)
+                        : null);
+
+                    edge.Info.InnerLowerLevelPath?.Reverse();
+
+                    AddEdge(targetNodeId, nodeId, edge.Cost, edge.Info.InnerLowerLevelPath);
+                }
+            }
+
+            for (int i = maxLevel + 1; i <= MaxLevel; i++)
+            {
+                SetCurrentLevel(i);
+                RemoveAbstractNode(nodeId);
+            }
+
+            nodeBackups.Remove(nodeId);
+        }
+
+
+        private class NodeBackup
+        {
+            public int Level { get; }
+            public List<AbstractEdge> Edges { get; }
+
+            public NodeBackup(int level, List<AbstractEdge> edges)
+            {
+                Level = level;
+                Edges = edges;
+            }
+        }
+
+        readonly Dictionary<Id<AbstractNode>, List<NodeBackup>> nodeBackups = new Dictionary<Id<AbstractNode>, List<NodeBackup>>();
+
+        // insert a new node, such as start or target, to the abstract graph and
+        // returns the id of the newly created node in the abstract graph
+        // x and y are the positions where I want to put the node
+        private Id<AbstractNode> InsertNodeIntoHierarchicalMap(Id<ConcreteNode> concreteNodeId, Position pos)
+        {
+            void SaveBackup(Id<AbstractNode> existingAbstractNodeId, AbstractNodeInfo nodeInfo)
+            {
+                var nodeBackupList = new List<NodeBackup>();
+                for (int level = 1; level <= nodeInfo.Level; level++)
+                {
+                    SetCurrentLevel(level);
+                    nodeBackupList.Add(new NodeBackup(
+                        level,
+                        GetNodeEdges(concreteNodeId)));
+                }
+
+                nodeBackups[existingAbstractNodeId] = nodeBackupList;
+            }
+
+            // If the node already existed (for instance, it was the an entrance point already
+            // existing in the graph, we need to keep track of the previous status in order
+            // to be able to restore it once we delete this STAL
+            if (ConcreteNodeIdToAbstractNodeIdMap.ContainsKey(concreteNodeId))
+            {
+                Id<AbstractNode> existingAbstractNodeId = ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
+                AbstractNodeInfo nodeInfo = AbstractGraph.GetNodeInfo(existingAbstractNodeId);
+
+                SaveBackup(existingAbstractNodeId, nodeInfo);
+
+                GraphLayers.AddNodeToAllLayers(existingAbstractNodeId, nodeInfo);
+
+                return ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId];
+            }
+
+            Cluster cluster = FindClusterForPosition(pos);
+
+            // create global entrance
+            var abstractNodeId = Id<AbstractNode>.From(NrNodes);
+
+            EntrancePoint entrance = cluster.AddEntrance(abstractNodeId, new Position(pos.X - cluster.Origin.X, pos.Y - cluster.Origin.Y));
+            cluster.UpdatePathsForLocalEntrance(entrance);
+
+            ConcreteNodeIdToAbstractNodeIdMap[concreteNodeId] = abstractNodeId;
+
+            var info = new AbstractNodeInfo(
+                abstractNodeId,
+                MaxLevel,
+                cluster.Id,
+                pos,
+                concreteNodeId);
+
+            GraphLayers.AddNodeToAllLayers(abstractNodeId, info);
+
+            foreach (var entrancePoint in cluster.EntrancePoints)
+            {
+                if (cluster.AreConnected(abstractNodeId, entrancePoint.AbstractNodeId))
+                {
+                    AddEdge(
+                        entrancePoint.AbstractNodeId,
+                        abstractNodeId,
+                        cluster.GetDistance(entrancePoint.AbstractNodeId, abstractNodeId));
+                    AddEdge(
+                        abstractNodeId,
+                        entrancePoint.AbstractNodeId,
+                        cluster.GetDistance(abstractNodeId, entrancePoint.AbstractNodeId));
+                }
+
+            }
+
+            return abstractNodeId;
+        }
 
         public bool PositionInCurrentCluster(Position position)
 		{
